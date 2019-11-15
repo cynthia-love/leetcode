@@ -4,7 +4,7 @@
 
 """
     方法2, 动态规划
-    思路: ababa是回文的条件是s[i+1, j-1]是且s[i] == s[j]
+    思路: ababa是回文的条件是s[i+1, j-1]是且s[i] == s[j], k为1或2时只需s[i] == s[j]
     所以, 从1到n遍历长度即可
 """
 
@@ -18,11 +18,11 @@ class Solution:
         dp = [[0 for j in range(len(s))] for i in range(len(s))]
         ans = ""
         for k in range(1, len(s)+1):
-            for i in range(len(s)-k+1):
+            for i in range(len(s)-(k-1)):
                 j = i+k-1  # 这里得先算出来, 不然会超时
                 dp[i][j] = s[i] == s[j] and (k <= 2 or dp[i+1][j-1])
                 # 这里用max_len比用len(ans)会稍微快一点, 虽然还是很慢
-                if k > len(ans) and dp[i][j]:
+                if dp[i][j] and k > len(ans):
                     ans = s[i:j+1]
         return ans
 
