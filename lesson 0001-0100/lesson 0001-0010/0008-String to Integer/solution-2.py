@@ -25,7 +25,7 @@ class Solution:
         ans = 0
         for i in s:
             try:
-                # 123aa, 枚举到a的时候会退出
+                # 123aab, 枚举到a的时候会退出
                 q = int(i)
                 if ans < p_min or (ans == p_min and flag*q < q_min):
                     return INT_MIN
