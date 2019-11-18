@@ -34,4 +34,4 @@ class Solution:
 
 
 s = Solution()
-print(s.maxArea([1, 8, 6]))
+print(s.maxArea([1, 8, 6, 8]))
