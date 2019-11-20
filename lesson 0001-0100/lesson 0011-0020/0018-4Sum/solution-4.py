@@ -10,30 +10,54 @@ from typing import List
 
 class Solution:
     def fourSum(self, nums: List[int], target: int) -> List[List[int]]:
-
-        nums.sort()
-
         def rf(nums, target, k):
-            print(nums)
             ans = []
-
             if k == 1:
-                return [[i] for i, v in enumerate(nums) if v == target]
+                for i in range(len(nums)):
+                    if i > 0 and nums[i] == nums[i-1]:
+                        continue
+                    if nums[i] == target:
+                        ans += [[nums[i]]]
+                return ans
 
-            for i in range(len(nums)):
+            if k == 2:
+                l, r = 0, len(nums)-1
+                if nums[l]+nums[l+1] > target:
+                    return ans
+                if nums[r]+nums[r-1] < target:
+                    return ans
+
+                while l < r:
+                    if l > 0 and nums[l] == nums[l-1]:
+                        l += 1
+                        continue
+                    if r < len(nums)-1 and nums[r] == nums[r+1]:
+                        r -= 1
+                        continue
+
+                    if nums[l]+nums[r] == target:
+                        ans += [[nums[l], nums[r]]]
+                        l, r = l+1, r-1
+                    elif nums[l]+nums[r] < target:
+                        l += 1
+                    else:
+                        r -= 1
+                return ans
+
+            for i in range(len(nums)-(k-1)):
                 if i > 0 and nums[i] == nums[i-1]:
                     continue
 
-                ts = rf(nums[i:], target-nums[i], k-1)
-                ans += [[i]+x for x in ts]
-
+                ts = rf(nums[i+1:], target-nums[i], k-1)
+                ans += [[nums[i]]+x for x in ts]
 
             return ans
 
-        return rf(nums, target, 4)
-
+        nums.sort()
+        print(nums)
+        return rf(nums, target, 1)
 
 
 s = Solution()
-print(s.fourSum([1, 0, -1, 0, -2, 2], 0))
+print(s.fourSum([-5,5,4,-3,0,0,4,-2], 4))
 
