@@ -3,7 +3,7 @@
 # Author: Cynthia
 
 """
-    方法2, 利用python[]特性, 相对于方法1, 更简洁
+    方法2, 利用python[]特性, 相对于方法1, 更简洁, 更pythonic
 """
 from typing import List
 

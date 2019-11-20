@@ -28,6 +28,7 @@ class Solution:
         ans = []
 
         def rf(s, digits):
+            # 递归结束条件, 到头了
             if not digits:
                 ans.append(s)
                 return
