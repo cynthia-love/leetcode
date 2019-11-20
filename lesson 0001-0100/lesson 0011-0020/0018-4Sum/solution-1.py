@@ -6,7 +6,7 @@
     题目分析, 四数相加等于target, 去重
 """
 """
-    方法1, 外层俩循环, 中间用hash做2sum
+    方法1, 外层俩循环, 中间用hash做2sum; 貌似除了2数和, hash表现并不好
 """
 from typing import List
 
