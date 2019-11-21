@@ -4,39 +4,46 @@
 
 """
     方法3, k数和通用方法, 第一种思路, 一个一个减
+    另外, 个别题目要索引, 所以递归先返回索引, 拿到最终值再转值, 这么写更通用
+    实际上不要索引的话, 可以不要index参数, 用nums[i+1:]方式传参
 """
 from typing import List
 
 
 class Solution:
     def fourSum(self, nums: List[int], target: int) -> List[List[int]]:
-        def rf(nums, target, k):
-            ans = []
+
+        nums.sort()
+
+        def rf(nums, index, target, k):
+
+            ans, size = [], len(nums)
             if k == 1:
-                for i in range(len(nums)):
-                    if i > 0 and nums[i] == nums[i-1]:
+                for i in range(index, size):
+                    if i > index and nums[i] == nums[i-1]:
                         continue
                     if nums[i] == target:
-                        ans += [[nums[i]]]
+                        ans += [[i]]
                 return ans
 
             if k == 2:
-                l, r = 0, len(nums)-1
+
+                l, r = index, size-1
                 if nums[l]+nums[l+1] > target:
-                    return ans
+                    return []
                 if nums[r]+nums[r-1] < target:
-                    return ans
+                    return []
 
                 while l < r:
-                    if l > 0 and nums[l] == nums[l-1]:
+                    if l > index and nums[l] == nums[l-1]:
                         l += 1
                         continue
-                    if r < len(nums)-1 and nums[r] == nums[r+1]:
+                    if r < size-1 and nums[r] == nums[r+1]:
                         r -= 1
                         continue
 
                     if nums[l]+nums[r] == target:
-                        ans += [[nums[l], nums[r]]]
+                        ans += [[l, r]]
                         l, r = l+1, r-1
                     elif nums[l]+nums[r] < target:
                         l += 1
@@ -44,19 +51,22 @@ class Solution:
                         r -= 1
                 return ans
 
-            for i in range(len(nums)-(k-1)):
-                if i > 0 and nums[i] == nums[i-1]:
+            for i in range(index, size-(k-1)):
+                # 每一层的遍历都跳过本层已处理过的值
+                # 这样最终获得的ans不需要去重
+                if i > index and nums[i] == nums[i-1]:
                     continue
 
-                ts = rf(nums[i+1:], target-nums[i], k-1)
-                ans += [[nums[i]]+x for x in ts]
+                ts = rf(nums, i+1, target-nums[i], k-1)
+                ans += [[i]+x for x in ts]
 
             return ans
 
         nums.sort()
-        return rf(nums, target, 4)
+        ans = rf(nums, 0, target, 4)
+        return [[nums[x] for x in y] for y in ans]
 
 
 s = Solution()
-print(s.fourSum([-5,5,4,-3,0,0,4,-2], 4))
+print(s.fourSum([0, 0, 0, 0], 0))
 

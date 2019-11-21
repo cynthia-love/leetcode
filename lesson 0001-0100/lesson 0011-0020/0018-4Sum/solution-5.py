@@ -3,18 +3,21 @@
 # Author: Cynthia
 
 """
-    方法3, 应该是k越大这种表现越好, 3数和230/313, 4数和217/282, 好像并没有
+    方法3的另一种实现方式, 比如算7个数的和, 可以设置一个递归把3和4个数的所有枚举都算出来, 并利用
+    动态规划的思想把中间结果存起来, 中间值存储形式:
     {
-        4: {8: [[1, 2, 3, 4], [2,3, 8, 0]]}
+        4: { -8: [[1, 2], [3, 4]], 4: [[0, 5]]},
+        2: ...
     }
-    了解这种思路即可, 但这题不适合, 有太多荣誉计算
+    nums先排个序, 便于归并
+
+    想法是好的, 但是从结果来看, 虽然能算出来, 但冗余计算太多, 导致时间性能远差于solution-4, 超时
 """
 from typing import List
 
 
 class Solution:
     def fourSum(self, nums: List[int], target: int) -> List[List[int]]:
-
         nums.sort()
         mem = {}
 
@@ -77,7 +80,7 @@ class Solution:
             mem[n] = ans
             return ans
 
-        ans_all = rf(15)
+        ans_all = rf(4)
         if target not in ans_all:
             return []
 
@@ -85,14 +88,6 @@ class Solution:
         ans_v = set([tuple([nums[x] for x in y]) for y in ans_i])
         return [[x for x in y] for y in ans_v]
 
-import datetime
-t1 = datetime.datetime.now()
-s = Solution()
-import random
-random.seed(1)
-x = [random.randint(-10, 10) for i in range(30)]
-print(x)
-r = s.fourSum(x, 0)
-print(r)
 
-print(datetime.datetime.now()-t1)
+s = Solution()
+print(s.fourSum([1, 2, 3, 4, 5], 10))

@@ -4,6 +4,7 @@
 
 """
     方法2, 外层同解法1, 内层双指针, 去重还是用set(tuple)
+    其实排序后, 跳过代码写好了, 用不着hash, 也不用去重
 """
 from typing import List
 
