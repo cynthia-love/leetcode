@@ -54,8 +54,7 @@ class Solution:
             return ans
 
         nums.sort()
-        print(nums)
-        return rf(nums, target, 1)
+        return rf(nums, target, 4)
 
 
 s = Solution()
