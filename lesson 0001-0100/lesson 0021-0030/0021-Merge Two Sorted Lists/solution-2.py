@@ -3,10 +3,7 @@
 # Author: Cynthia
 
 """
-    题目分析, 有序链表合并
-"""
-"""
-    方法1, 非递归, 开辟新的链表空间
+    方法2, 非递归, 且不开辟新的链表空间
 """
 
 
@@ -20,32 +17,19 @@ class Solution:
 
     def mergeTwoLists(self, l1: ListNode, l2: ListNode) -> ListNode:
 
-        if not l1: return l2
-        if not l2: return l1
+        pos = ans = ListNode(-1)
 
-        ans = ListNode(-1)
-
-        p, q, pos = l1, l2, ans
+        p, q = l1, l2
 
         while p and q:
 
             if p.val < q.val:
-                node = ListNode(p.val)
-                pos.next = node
-                p, pos = p.next, pos.next
-
+                pos.next, pos, p = p, p, p.next
             else:
-                node = ListNode(q.val)
-                pos.next = node
-                q, pos = q.next, pos.next
+                pos.next, pos, q = q, q, q.next
 
         p = q if not p else p
-
-        while p:
-            node = ListNode(p.val)
-            pos.next = node
-            p, pos = p.next, pos.next
-
+        pos.next = p
         return ans.next
 
 
@@ -62,5 +46,3 @@ ans = s.mergeTwoLists(x1, x2)
 while ans:
     print(ans.val, end="")
     ans = ans.next
-
-
