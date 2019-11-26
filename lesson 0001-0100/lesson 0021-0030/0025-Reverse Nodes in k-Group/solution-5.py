@@ -16,7 +16,19 @@ class ListNode:
 class Solution:
     def reverseKGroup(self, head: ListNode, k: int) -> ListNode:
 
+        pos = ans = ListNode(-1)
 
+        while True:
+            h, c = head, 1
+            if not h: return ans.next
+
+            while h and c <= k: h.next, pos.next, h, c = pos.next, h, h.next, c+1
+
+            # c>k说明翻转到底了, 以->-1->3->2->1 4->5为例, 此时head指向1, h指向4,
+            if c > k: head.next, pos, head = h, head, h
+            # 不足k个, 说明多翻了, 最后一次要再翻一次翻回去
+            # -1->3->2->1 5->4, 此时head指向4, h指向none, pos指向1
+            else: head.next, head, k = None, pos.next, c-1
 
 
 x = ListNode(1)
