@@ -25,7 +25,8 @@ class Solution:
         # 比如ababab, 0号位-1, 1号位0, 2号位0, 3号位aba-b, 1, 4号位abab-a, 2
         next, p, q, lenh, lenn = [-1]*len(needle), 0, 0, len(haystack), len(needle)
 
-        # KMP算法的核心, 是怎么算出这个next数组
+        # KMP算法的核心, 是怎么算出这个next数组, next[i]的计算有利用到之前算出来的next
+        # 即next的计算实际用到了动态规划的思想
 
         i = 1
         while i < lenn:
