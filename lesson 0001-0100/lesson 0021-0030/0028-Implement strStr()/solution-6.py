@@ -45,7 +45,6 @@ class Solution:
         bc, lenh, lenn = defaultdict(lambda: -1), len(haystack), len(needle)
         for i in range(lenn):
             bc[needle[i]] = i
-        print(bc)
 
         # 生成后缀对应的前面的索引, 注意, 由于可能有多个, 所以没法根据是否为0判断是不是前缀
         # 需要单独生成一个前缀数组存, 比如: cabcabcab, 那么suffix[3]先算出来0, 后面又算出来3
@@ -60,49 +59,43 @@ class Solution:
                 p, k = p-1, k+1
             if p == -1: prefix[k-1] = True
 
-        i = 0
+        p = lenn-1
 
-        while i <= lenh-1:
-            p, q = i+lenn-1, lenn-1
-            """
-                0123, 坏字符不行, 好后缀没有, 前缀没有
-                aabaa
-                bddaa
-            """
-            while p >= i and q >= 0 and haystack[p] == needle[q]:
-                p, q = p-1, q-1
+        while p <= lenh-1:
 
-            if q < 0: break
+            k = 0
+            while k <= lenn-1:
+                p1, p2 = p-k, lenn-1-k
+                if haystack[p1] == needle[p2]:
+                    k += 1
+                else:
+                    # 先处理坏字符
+                    # 如果该坏字符在needle没有, 移动距离(把0号位移动到p2下一个位置)p2+1-0=p2-(-1)
+                    # 如果该坏字符在needle里有, 移动距离p2-bc[haystack[p1]]
+                    p_next = max(p+1, p+p2-bc[haystack[p1]])
+                    # 仅利用坏字符特性和p+1取max, 即可完成匹配
 
-            # 没有匹配上, 那么haystack[p]为坏字符, 取其bc值
-            print(haystack[p])
-            # 情况1, bc值不为-1, 比如为2, 那么2号位要和p对齐, 即i=p-2
-            # 如果为-1, i=p+1=p-(-1)
-            i1 = p-bc[haystack[p]]
+                    # 坏字符处理完处理好后缀, 如果存在, 移动距离p2+1-suffix[k]
+                    if suffix[k] != -1: p_next = max(p_next, p+p2+1-suffix[k])
+                    # 仅利用坏字符特性和好后缀, 再算上p+1取max, 也可以完成匹配
 
-            # 没有匹配上, 处理好后缀, suffix[lenn-q-1]
-            k = lenn-q-1
-            # 情况1, suffix不为-1, 即存在, 比如为2, 那么2号位要和p+1对齐, 即i=p+1-suffix[k]
-            i2 = p+1-suffix[k]
-            i3 = -2
-            # 情况2, suffix为-1, 即不存在, 那么取看前缀, 假如k=2的时候找到了
-            if suffix[k] == -1:
-                while k >= 1:
-                    if prefix[k]:
-                        i3 = i+lenn-k
-                        break
-                    k = k-1
-                if k == 0:
-                    i3 = i+lenn
-            # 如果k=0, 即取不到前缀
-            i = max(i1, i2, i3, i+1)
+                    else:
+                        # 如果不存在, 去找存在的前缀, 找到了, 移动距离lenn-1-(k-1)-0
+                        while k >= 1:
+                            if prefix[k]:
+                                p_next = max(p_next, p+lenn-k)
+                                break
+                            k -= 1
 
-        if i > lenh-1: return -1
-        else: return i
+                    p = p_next
+                    break
 
+            if k > lenn-1: break
+
+        return p-lenn+1 if p <= lenh-1 else -1
 
 
 s = Solution()
 
-print(s.strStr("aabaaabaaac", "aaac"))
+print(s.strStr("babbbbbabb", "bbab"))
 
