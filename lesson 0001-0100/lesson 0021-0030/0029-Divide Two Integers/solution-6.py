@@ -24,8 +24,8 @@ class Solution:
                 if dd >= dr and c >= 0:
                     dd, r = dd - dr, r + (1 << c)
 
-        return r
+        return min([-r, r][dividend ^ divisor >= 0], (1 << 31)-1)
 
 
 s = Solution()
-print(s.divide(100, 3))
+print(s.divide(1, 1))
