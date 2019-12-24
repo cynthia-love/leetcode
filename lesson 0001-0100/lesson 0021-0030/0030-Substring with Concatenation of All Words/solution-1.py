@@ -15,41 +15,41 @@ class Solution:
     def findSubstring(self, s: str, words: List[str]) -> List[int]:
         if not s or not words: return []
 
-        ans, lens, size, index = [], len(words), len(words[0]), 0
+        lens, size, ans = len(words), len(words[0]), []
 
         def isMatch(subs, subwords):
-            lens, size = len(subwords), len(subwords[0])
-            pos, l_pos = 0, [0] * lens
+            sublens, subsize = len(subwords), len(subwords[0])
+            l_pos = [0]*sublens
 
-            while pos <= index + lens * size - 1:
+            for item in subs:
 
-                for i in range(lens):
-                    if l_pos[i] > size - 1: continue
-                    if words[i][l_pos[i]] == s[pos]:
+                for i in range(sublens):
+                    if l_pos[i] > subsize - 1: continue
+                    if words[i][l_pos[i]] == item:
                         l_pos[i] = l_pos[i] + 1
-                        if l_pos[i] > size - 1:
-                            l_pos = [x if x > size - 1 else 0 for x in l_pos]
+                        if l_pos[i] > subsize - 1:
+                            l_pos = [x if x > subsize - 1 else 0 for x in l_pos]
                             break
-                pos += 1
 
-            if sum(l_pos) == lens * size:
+            return True if sum(l_pos) == sublens * subsize else False
 
-        while index <= len(s)-lens*size:
+        for index in range(len(s)-lens*size+1):
 
+            flag = False
             for item in ans:
-                if index-item < lens*size and (index-item) % size == 0:
-                    print(item)
-                    # 这里优化
-                    break
+                dis = index -item
+                if dis < lens*size and dis % size == 0:
+                    subs = s[index+lens*size-dis: index+lens*size]
+                    subwords = [s[i: i+size] for i in range(item, index, size)]
+                    if isMatch(subs, subwords):
+                        flag = True
+                        ans.append(index)
+                        break
 
-
-                ans.append(index)
-                match = True
-
-            index += 1
+            if not flag and isMatch(s[index: index+lens*size], words): ans.append(index)
 
         return ans
 
 
 s = Solution()
-print(s.findSubstring("aaaaaaaa", ["aa","aa", "aa"]))
+print(s.findSubstring("aaaaaaaaaaaaaaa", ["aa","aa", "aa"]))
