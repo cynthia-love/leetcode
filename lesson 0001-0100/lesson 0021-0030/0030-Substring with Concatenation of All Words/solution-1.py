@@ -25,7 +25,7 @@ class Solution:
 
                 for i in range(sublens):
                     if l_pos[i] > subsize - 1: continue
-                    if words[i][l_pos[i]] == item:
+                    if subwords[i][l_pos[i]] == item:
                         l_pos[i] = l_pos[i] + 1
                         if l_pos[i] > subsize - 1:
                             l_pos = [x if x > subsize - 1 else 0 for x in l_pos]
@@ -36,7 +36,7 @@ class Solution:
         for index in range(len(s)-lens*size+1):
 
             flag = False
-            for item in ans:
+            for item in ans[len(ans)-1:-1:-1]:
                 dis = index -item
                 if dis < lens*size and dis % size == 0:
                     subs = s[index+lens*size-dis: index+lens*size]
@@ -52,4 +52,4 @@ class Solution:
 
 
 s = Solution()
-print(s.findSubstring("aaaaaaaaaaaaaaa", ["aa","aa", "aa"]))
+print(s.findSubstring("abaababbaba", ["ba","ab", "ab"]))
