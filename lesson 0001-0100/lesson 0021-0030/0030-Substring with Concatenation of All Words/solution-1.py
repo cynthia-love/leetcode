@@ -7,6 +7,19 @@
     找到s中所有子串的起始索引, 子串的概念为words中的所有单词拼起来(不限先后次序)
     比如这里可以找foobar也可以找barfoo, 限定每个单词长度一致
 """
+"""
+    方法1, 暴力法, 给每个word设置一个指针, 从头开始遍历s, 每次取和所有word加起来长度相同的子串
+    针对每个字符, 遍历words指针, 匹配上的后移一位; 如果某个匹配到头了, 把所有未匹配到头的重置
+    子串遍历完以后, 看指针数组的总长度, 以确定是否都到头了, 到了, 说明匹配上
+    
+    不出意外, 上述方法超时
+    
+    第一个优化思路, 如果前面匹配上的子串和当前子串有重合的部分, 且这部分长度是size的倍数, 那么
+    这部分就不需要再重复判断了
+    
+    bababababa
+      babababacd, 这里只需要看cd和ba能不能匹配上了, 出意外, 还是超时
+"""
 from typing import List
 
 
@@ -38,7 +51,8 @@ class Solution:
             flag = False
             for item in ans[-1:-1:-1]:
                 dis = index -item
-                if dis < lens*size and dis % size == 0:
+                if dis >= lens*size: break
+                if dis % size == 0:
                     subs = s[index+lens*size-dis: index+lens*size]
                     subwords = [s[i: i+size] for i in range(item, index, size)]
                     if isMatch(subs, subwords):
@@ -52,4 +66,4 @@ class Solution:
 
 
 s = Solution()
-print(s.findSubstring("abaababbaba", ["ba","ab", "ab"]))
+print(s.findSubstring("bababaab", ['ba', 'ab']))
