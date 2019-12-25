@@ -36,7 +36,7 @@ class Solution:
         for index in range(len(s)-lens*size+1):
 
             flag = False
-            for item in ans:
+            for item in ans[-1:-1:-1]:
                 dis = index -item
                 if dis < lens*size and dis % size == 0:
                     subs = s[index+lens*size-dis: index+lens*size]
