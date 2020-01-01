@@ -59,4 +59,5 @@ class Solution:
 
 
 s = Solution()
-print(s.findSubstring("barfoofoobarthefoobarman", ["bar","foo","the"]))
+print(s.findSubstring("lingmindraboofooowingdingbarrwingmonkeypoundcake",
+                      ["fooo","barr","wing","ding","wing"]))
