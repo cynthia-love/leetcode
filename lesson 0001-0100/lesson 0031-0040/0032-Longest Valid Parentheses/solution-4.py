@@ -4,36 +4,29 @@
 
 """
     方法3, 动态规划
+    如果直接按长度2， 4， 6， 8去做动规， 效果有限， 尤其对于(())((()))这种4+6很麻烦
+    一个比较好的思路是按结尾算， 记以i结尾的最长子字符串长度, 这样一次遍历就完事
+    另外， 这么考虑还有个好处是， 对于结尾为(的， 求都不用求
+
+    动规方程情况1， ......()， m[i] = m[i-2]+2 if s[i-1]=="(" and s[i] == ")"
+    动规方程情况2， ......)),
+        比如((())), m[i] = m[i-1]+2 if s[i-m[i-1]-1]=="(" and s[i] ==")", 特别地m[i-1]为0也符合该式子
+        比如(())((())), 相较于上式， 改成m[i] = m[i-1]+2+m[i-m[i-1]-2], 这是最一般的情况
+    合并一下：m[i] = 2+m[i-1]+m[i-m[i-1]-2] if s[i-m[i-1]-1]=="(" and s[i] == ")"
+    该式子三种情况都适用
 """
 from collections import defaultdict
+
 
 class Solution:
     def longestValidParentheses(self, s: str) -> int:
 
-        if not s or not s[1:]: return 0
-        mem = defaultdict(int)
+        m = defaultdict(int)
 
-        for l in range(2, len(s)+1, 2):
+        for i in range(1, len(s)): m[i] = 2+m[i-1]+m[i-m[i-1]-2] if s[i] == ")" and i-m[i-1]-1 >= 0 and s[i-m[i-1]-1] == "(" else 0
 
-            for i in range(len(s)-l+1):
-
-                j = i+l-1
-
-                if l == 2:
-                    mem[(i, j)] = j-i+1 if s[i] == '(' and s[j] == ')' else 0
-                else:
-
-                    if mem[(i+1, j-1)] and s[i] == '(' and s[j] == ')':
-                        mem[(i, j)] = j-i+1
-                    else:
-                        for p in range(i+2, j, 2):
-                            if mem[(i, p-1)] and mem[(p, j)]:
-                                mem[(i, j)] = j-i+1
-                                break
-
-                # print(l, len(s), i, j, s[i: j+1], mem[(i, j)])
-        return max(mem.values())
+        return max(m.values()) if m else 0
 
 
 s = Solution()
-print(s.longestValidParentheses(")(((((()())()()))()(()))("))
+print(s.longestValidParentheses("(()))())("))

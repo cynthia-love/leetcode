@@ -12,8 +12,9 @@
 class Solution:
     def longestValidParentheses(self, s: str) -> int:
 
-        # 正向来一次, 处理(大于等于)的情况
-        p, q, ans, h = 0, 0, 0, {')': 0, '(': 0}
+        ans = 0
+        # 正向来一次, 处理左括号大于等于右括号的情况(()), ((())
+        p, q, h = 0, 0, {')': 0, '(': 0}
         while p <= len(s)-1 and q <= len(s)-1:
 
             h[s[q]] += 1
@@ -29,7 +30,7 @@ class Solution:
             else:
                 p, q = q + 1, q + 1
                 h[')'], h['('] = 0, 0
-        # 反向来一次, 处理(小于等于)的情况
+        # 反向来一次, 处理(小于等于)的情况, (()))
         p, q, h = len(s)-1, len(s)-1, {')': 0, '(': 0}
         while p >= 0 and q >= 0:
             h[s[p]] += 1
