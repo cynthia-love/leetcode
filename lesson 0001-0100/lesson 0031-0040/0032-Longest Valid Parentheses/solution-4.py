@@ -29,4 +29,4 @@ class Solution:
 
 
 s = Solution()
-print(s.longestValidParentheses("(()))())("))
+print(s.longestValidParentheses("((())((())))"))

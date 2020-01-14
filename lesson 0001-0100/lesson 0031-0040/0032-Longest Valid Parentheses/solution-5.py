@@ -27,13 +27,21 @@ from collections import deque
 class Solution:
     def longestValidParentheses(self, s: str) -> int:
 
-        stack, ans = deque(), 0
+        stack, ans = deque([-1]), 0
         for i in range(len(s)):
-            # 保证压入的只能是(的下标
+            # 遇到(无脑压入
             if s[i] == '(':
                 stack.append(i)
+            # 遇到)才需要特殊处理; 要么长度等于1, 要么大于1
             else:
-                pass
+                # 等于1, 更新边界, 保证边界始终是1个
+                if len(stack) == 1:
+                    stack.pop()
+                    stack.append(i)
+                # 大于等于2, 说明是边界+至少一个(
+                else:
+                    stack.pop()
+                    ans = max(ans, i-stack[-1])
         return ans
 
 
