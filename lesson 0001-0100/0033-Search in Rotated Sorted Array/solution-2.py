@@ -34,6 +34,7 @@ class Solution:
             下面这句if相当于: 假 假 真 or 假 真 假 or 真 假 假, 即异或的三种情况; 也就是说:
             A xor B xor C 等价于 (A and B and C) or (not A and not B and C) or (not A and B and not C) or (A and not B and not C) 
             if nums[l] < target < nums[m] or nums[m] < nums[l] < target or target < nums[m] < nums[l]: r = m-1
+            其实没必要, 有点过于强行增加理解难度了
             """
             if (nums[l] > target) ^ (target > nums[m]) ^ (nums[m] >= nums[l]): r = m-1
             else: l = m+1
