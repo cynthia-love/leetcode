@@ -9,5 +9,3 @@
 
 a = "abc"
 print(a)
-a[1] = "x"
-print(a)
