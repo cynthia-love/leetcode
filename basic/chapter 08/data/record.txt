@@ -1,0 +1,14 @@
+Lucy:part1sentenceL1
+Jim:part1sentenceJ1
+Lucy:part1sentenceL2
+Jim:part1sentenceJ2
+===========================
+Lucy:part2sentenceL1
+Jim:part2sentenceJ1
+Lucy:part2sentenceL2
+Jim:part2sentenceJ2
+===========================
+Lucy:part3sentenceL1
+Jim:part3sentenceJ1
+Lucy:part3sentenceL2
+Jim:part3sentenceJ2
