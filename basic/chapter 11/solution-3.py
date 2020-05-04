@@ -7,9 +7,47 @@
     (觉得乱那就尽量不要搞同名的变量/函数)
 """
 # 0. 书上的例子
+import random
 
+class Fish:
+    def __init__(self):
+        self.x = random.randint(0, 10)
+        self.y = random.randint(0, 10)
 
+    def move(self):
+        self.x += 1
+        print("我移动到了({},{})".format(self.x, self.y))
 
+class Goldfish(Fish):
+    pass
+    # 金鱼和鱼一模一样， 纯粹为了区分单独声明了个类， 无新变量、函数
+    # 子类不声明init时， 系统会自动调父类的init
+
+class Shark(Fish):
+    def __init__(self):
+        # Fish.__init__(self), 这么调称为调用未绑定的父类方法， 可以但不推荐
+        super().__init__()  # 建议这么干
+        self.hungry = True
+
+    def eat(self):
+        if self.hungry:
+            print("吃了")
+            self.hungry = False
+        else:
+            print("饱了")
+
+fish = Fish()
+fish.move()
+
+goldFish = Goldfish()
+goldFish.move()
+goldFish.move()
+
+shark = Shark()
+shark.move()
+shark.move()
+shark.eat()
+shark.eat()
 
 
 # 1. 全局变量-函数变量; 同名覆盖, 外部仍存在, 无法访问

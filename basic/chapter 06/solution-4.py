@@ -22,3 +22,36 @@ print(x_f)  # [1, 2, 3, 8]
 # lambda在map中的应用; filter是过滤掉某些元素, 而map则是按照一定规则批量映射
 x_m = list(map(lambda i: i**2, x))
 print(x_m)
+
+# 注意, filter和map都可以通过列表推导式实现
+ll = [1, 2, 3, 4, 5]
+print([x+1 for x in ll])  # map
+print([x for x in ll if x > 2])  # filter
+print([x+1 for x in ll if x > 2])  # filter+map
+print([x+1 if x < 4 else x+100 for x in ll if x > 2])  # [4, 104, 105]
+# !!! 上面这个一定记好了, filter+条件map, 外层的if是filter, 内层的if是条件map
+
+# 集合推导式
+ss = {1, 2, 3, 4, 5}
+print({x + 1 if x < 4 else x+100 for x in ss if x > 2})  # {104, 105, 4}
+
+# 字典推导式
+dd = {"a":1, "b": 2, "c": 3, "d": 4, "e": 5}
+print({k: v+1 for k, v in dd.items() if v > 2})  # 字典推导只能实现filter和普通map, 无法条件map
+print(dict([(k, v+1) if v < 4 else (k, v+100) for k, v in dd.items() if v > 2]))
+# 字典推导不能直接实现条件map, 主要是:不好处理, 可以借助dict([(k, v)]过渡一下, 实现filter+条件map
+
+# 字符串没有推导式
+# 元组也没有
+tt = (1, 2, 3, 4, 5)
+print((x for x in tt))  # 得到的并不是个元组, 而是个generator
+print(x for x in tt)  # 和上面输出一样, 说明()并不是必须
+# 既然是生成器那就可迭代, 所有需要可迭代对象的地方可以直接写, 除非真的涉及优先级问题才加()
+for i in (x for x in tt):
+    print(i)  # 当然这里没太必要
+
+print(list(x for x in tt))  # 这里也没啥必要, 直接list(tt)不行吗
+# 除非没法直接用tt???需要filter+条件map???
+print(list(x+1 if x < 4 else x+100 for x in tt if x >2))
+ss = sum(x+1 if x < 4 else x+100 for x in tt if x > 2)
+print(ss)
