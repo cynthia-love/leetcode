@@ -1,0 +1,8 @@
+setuptools>=41.1.0
+wheel
+
+[dev]
+twine
+
+[test]
+twine

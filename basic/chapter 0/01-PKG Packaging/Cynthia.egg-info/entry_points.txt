@@ -1,0 +1,3 @@
+[console_scripts]
+hellopy = hellopy.hello:f
+
