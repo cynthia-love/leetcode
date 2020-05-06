@@ -5,7 +5,7 @@
     操作系统模块os和os.path
 """
 import os
-print(os.getcwd())  # C:\Projects\leetcode\basic\chapter 08, 当前工作目录
+print(os.getcwd())  # C:\Projects\leetcode\basic fishc\chapter 08, 当前工作目录
 
 os.chdir("C:/Projects")
 print(os.getcwd())
