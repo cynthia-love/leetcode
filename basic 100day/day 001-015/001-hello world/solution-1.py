@@ -2,5 +2,9 @@
 # Author: Cynthia
 
 """
+    day 1, 初识Python
+"""
 
+"""
+    
 """
