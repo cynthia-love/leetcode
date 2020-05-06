@@ -9,7 +9,7 @@ print(os.getcwd())  # C:\Projects\leetcode\basic\chapter 08, 当前工作目录
 
 os.chdir("C:/Projects")
 print(os.getcwd())
-os.chdir("C:/Projects/leetcode/basic/chapter 08")
+os.chdir("C:/Projects/leetcode/basic fishc/chapter 08")
 
 print(os.listdir("."))  # 当前目录
 print(os.listdir("C:/Projects"))  # 指定目录
