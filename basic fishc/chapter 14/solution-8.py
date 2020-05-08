@@ -2,7 +2,7 @@
 # Author: Cynthia
 
 """
-    根据用户输入去查询百度百科对应词条有多少个义项, 打印出来每个的副标题(若有)
+    根据用户输入去查询百度百科对应词条有多少个义项, 二次请求, 然后打印出来每个的副标题(若有)
 """
 from urllib import request
 from urllib import parse

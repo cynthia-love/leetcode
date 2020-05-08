@@ -48,7 +48,7 @@ try:
     for each in re.findall(r"(href=\"(\S*view\S*)\")", res.decode("utf-8")):
         print(each)
 
-    # 自己写re不如beautifulsoup,
+    # 自己写re不如beautifulsoup, 不过re更灵活, 如果是查找具有某一模式的字符串, re比beautifulsoup好用
     # <a class="lock-lemma" href="/view/10812319.htm" nslog-type="10003105" target="_blank" title="锁定"><em class="aaa"></em>锁定</a>
     # 像是这种复杂标签情况, 自己写很难把'锁定'提取出来, BeautifulSoup则可以先定位到标签后, 再去拿标签的属性和子标签, 比如锁定对应子标签.text
 
