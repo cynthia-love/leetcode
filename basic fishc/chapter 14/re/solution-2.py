@@ -101,7 +101,7 @@ print(re.search("\s", "aa bb"))  # " "
 # \S, 匹配非空白字符
 print(re.search("\S", "    b"))  # b
 
-# \w, 单词字符, 注意是字符, 不是一整个单词, 一般指[a-zA-Z0-9]
+# \w, 单词字符, 注意是字符, 不是一整个单词, 一般指[a-zA-Z0-9]; 字符!!!不是单词!!!
 print(re.search("\w", "hello world"))  # h
 # \W, 非单词字符
 print(re.search("\W", "hello world"))  # " "
