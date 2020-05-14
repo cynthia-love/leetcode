@@ -26,7 +26,7 @@ print(res.end(1))  # 3
 
 # 再说findall; 慎用, 尤其带括号的时候; 还是finditer好
 res = re.findall(r"abc", "abcefgabcdabc")
-print(res)  # ['abc', 'abc', 'abc'], 怎么不是对象了
+print(res)  # ['abc', 'abc', 'abc'], 怎么不是对象了; 有时候只需要结果不需要span, 且不需要总的串, 只需要个别子组, 用findall也不是不行
 print(type(res))  # <class 'list'>...直接就是个list???
 
 res = re.findall(r"x(a)(b)(c)", "xabcefgxabcdxabc")
