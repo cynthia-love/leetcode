@@ -32,6 +32,7 @@ print(type(res))  # <class 'list'>...直接就是个list???
 res = re.findall(r"x(a)(b)(c)", "xabcefgxabcdxabc")
 print(res)  # [('a', 'b', 'c'), ('a', 'b', 'c'), ('a', 'b', 'c')]
 # 带子组的情况findall会给把子组全拆了???子组外面的东西就没了???x呢???
+# 想要获得完整匹配串其实也简单, (x(a)(b)(c)), 强制把整个作为一个子组就行了
 
 
 # 最后说说finditer

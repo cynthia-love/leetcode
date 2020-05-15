@@ -11,6 +11,7 @@ from urllib import request
 from urllib import parse
 from urllib import error
 
+"""
 url = "https://tieba.baidu.com/p/6658627051"
 
 res = request.urlopen(url, timeout=30).read()  # timeout单位秒
@@ -32,6 +33,7 @@ for tag in imgs:
     with open(file_pic, "wb") as f:
         f.write(res_pic)
 
+"""
 # 办法2, 正则, 不需要索引位置, 用findall就行, 不用finditer
 # 另外, 由于findall不会返回整串只会返回子组, 想获取整串可以在最外面加括号
 try:
@@ -45,12 +47,16 @@ head = {
 }
 req = request.Request(url=url, headers=head)
 res = request.urlopen(req).read().decode("utf-8")
-imgs = re.findall(r"(<img class=\"BDE_Image\" src=\"(.*/(.*\.jpg))\".*/>)", res)
+# print(res)
+# 对于这种大段正则匹配, 最难处理的是正则的贪婪非贪婪问题
+# 注意这里的*, +后面的?, 表示非贪婪
+# 另外, 注意这里的>, 不要写/>; (bs里打印的元素都带/, 那是处理过的, 不是原始网页返回的字符串)
+imgs = re.findall(r'<img.*?class="BDE_Image".*?src="(.*?/([a-z0-9]+?.jpg))".*?>', res)
 for item in imgs:
     print(item)
-    # req_pic = request.Request(url=item[0], headers=head)
-    # res_pic = request.urlopen(req_pic).read()
-    # with open("data/"+item[1]+".jpg", "wb") as f:
-    #     f.write(res_pic)
+    req_pic = request.Request(url=item[0], headers=head)
+    res_pic = request.urlopen(req_pic).read()
+    with open("data/"+item[1]+".jpg", "wb") as f:
+        f.write(res_pic)
 
 
