@@ -75,3 +75,10 @@ print(pattern)
 res = re.search(pattern, "192.168.1.1")
 print(res.group())
 
+# 如果用findall注意下, findall会把带()的拆成子组
+res = re.findall(pattern, "192.168.1.1")
+print(res)  # [('192', '168', '1', '1')]
+# 想得到完整的匹配串, 除了用finditer, 还可以在最外层包一层括号
+res = re.findall("({})".format(pattern), "192.168.1.1")
+print(res)  # [('192.168.1.1', '192', '168', '1', '1')]
+

@@ -35,6 +35,7 @@ print(res)  # [('a', 'b', 'c'), ('a', 'b', 'c'), ('a', 'b', 'c')]
 # 想要获得完整匹配串其实也简单, (x(a)(b)(c)), 强制把整个作为一个子组就行了
 
 
+
 # 最后说说finditer
 res = re.finditer(r"aba", "ababacaba")
 print(res)  # <callable_iterator object at 0x000000000217C2B0>
