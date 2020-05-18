@@ -1,15 +1,9 @@
 
 
-import os
-
-print(os.path.basename("http://adfd/adfdaf/adfd/dfadf/"))
-
 from urllib import response
 
 from urllib import request
 
-x = request.urlopen("http://www.baidu.com")
+x = request.urlopen("http://www.dmoztools.net/Computers/Programming/Languages/Python/Books/")
 
-print(x)
-
-from scrapy import res
+print(x.read().decode("utf-8"))

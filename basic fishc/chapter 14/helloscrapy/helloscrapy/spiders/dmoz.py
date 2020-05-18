@@ -5,6 +5,8 @@
     dmoz spider
 """
 import scrapy
+from helloscrapy.items import HelloscrapyItem
+
 
 class dmoz(scrapy.Spider):
     name = 'dmoz'
@@ -13,13 +15,22 @@ class dmoz(scrapy.Spider):
         'http://www.dmoztools.net/Computers/Programming/Languages/Python/Books/',
         'http://www.dmoztools.net/Computers/Programming/Languages/Python/Resources/'
     ]
-    allowed_domains = ["dmoztools.net"]   # 不在此域中的url不会访问
+    allowed_domains = ["dmoztools.net"]  # 不在此域中的url不会访问
 
     # 注意这里的parser, 每个初始url返回response后都会调这个方法; 如果有多个url
     # 可以通过response.url区分是哪个url返回的, 以进行不同的处理逻辑
     def parse(self, response):
-        print(response)
+        # print(response.body)
         source_url = response.url
         file_name = source_url.split("/")[-2]  # 一般url最后会带一个/
-        with open("data/"+file_name, "wb") as f:
+        with open("data/" + file_name, "wb") as f:
             f.write(response.body)
+
+        res, items = [], response.xpath('//div[@class="title-and-desc"]')
+        for item in items:
+            t = HelloscrapyItem()
+            t['title'] = item.xpath('a/div/text()').extract()[0].strip()
+            t['link'] = item.xpath('a/@href').extract()[0].strip()
+            t['desc'] = item.xpath('div/text()').extract_first().strip()
+            res.append(t)
+        return res

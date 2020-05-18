@@ -15,7 +15,7 @@ Markdown是一种可以使用普通文本编辑器编写的标记语言，通过
 index-servers=pypi
 [pypi]
 repository = https://upload.pypi.org/legacy/
-username: PyPI用户名
+username: PyPI用户名(cynthia-love)
 password: PyPI密码
 ```
 ## 操作步骤
