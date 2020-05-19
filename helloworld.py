@@ -1,9 +1,6 @@
 
 
-from urllib import response
+x = [8, 100, 2]
+print(list(enumerate(x)))
 
-from urllib import request
-
-x = request.urlopen("http://www.dmoztools.net/Computers/Programming/Languages/Python/Books/")
-
-print(x.read().decode("utf-8"))
+from typing import List

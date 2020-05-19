@@ -2,7 +2,7 @@
 # Author: Cynthia
 
 """
-    Checkbutton组件, 多选
+    Checkbutton多选组件
     注意, 虽然是多选, 也是要一个一个添加的
     其是否选中用variable值决定, 0未选中, 1选中
     太难使了, 还是封装一层吧
