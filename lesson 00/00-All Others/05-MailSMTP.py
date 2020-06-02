@@ -52,7 +52,7 @@ def main():
         # *************************************************************************
         # 其他格式附件一样的上传方法, 也是要先以base64/utf-8读取
         try:
-            with open("00-CrawlerElearning.py", "rb") as file:
+            with open("03-CrawlerElearning.py", "rb") as file:
                 p4 = MIMEText(file.read(), "base64", "utf-8")
         except:
             p4 = None

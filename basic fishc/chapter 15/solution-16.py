@@ -8,25 +8,26 @@
 """
 
 from tkinter import *
-
 root = Tk()
+# ********************************************************************************************************************
 
 text = Text(root, width=50, height=20)
 text.pack()
 
-text.insert('end', "这里是初始文字")
+text.insert('end', "这里是初始文字\n这里是第二行")
 
 text.mark_set("middle", "1.2")
-text.mark_set("outer", "1.10")
-
+text.mark_set("lineouter", "1.10")
+text.mark_set("allouter", "3.10")
 
 button = Button(root, text="中间", command=lambda :text.insert('middle', '中间'))
 button.pack()
 
-button = Button(root, text="超过", command=lambda :text.insert('outer', '中间'))
+button = Button(root, text="行内超", command=lambda :text.insert('lineouter', '行内超'))
 button.pack()
 
-button = Button(root, text="超过2", command=lambda :text.insert('outer', '看看'))
+button = Button(root, text="全部超", command=lambda :text.insert('allouter', '全部超'))
 button.pack()
 
+# ********************************************************************************************************************
 root.mainloop()

@@ -6,46 +6,56 @@
 """
 
 from tkinter import *
-
 root = Tk()
+# *******************************************************************************************************************
 
 text = Text(root, width=50, height=20)
-text.pack()
-text.insert('end', '初始字符串这里是哈哈哈 like you')
+text.pack()  # pack不指定参数时，默认为top
 
+# 文件尾部插入
+text.insert('end', '初始字符串这里初始字符串这里初始字符串这里初始字符串这里\n这里是第二行')
+
+# 文件尾部插入
 button = Button(root, text="结尾", command=lambda :text.insert('end', "结尾"))
 button.pack(side='left')
 
+# 光标位置插入
 button = Button(root, text="光标", command=lambda :text.insert('insert', "光标"))
 button.pack(side='left')
 
-# 行从1开始索引, 列从0开始索引, 这里表示插到第一行第3个位置; 索引超限插到最后
-button = Button(root, text="行列", command=lambda :text.insert('1.2', "行列"))
+# 第1行，第3列；注意自动换行的认为是一行；注意行超限会变成往文件尾插入，列超限会变成往当前行尾插入
+button = Button(root, text="行列", command=lambda :text.insert('3.2', "行列"))
 button.pack(side='left')
 
-# 同样, 索引超限, 插到最后
+# 行尾插入，行超限变成往文件尾插入
 button = Button(root, text="行尾", command=lambda :text.insert('2.end', "行尾"))
 button.pack(side='left')
 
-button = Button(root, text="鼠标", command=lambda :text.insert('current', "鼠标"))  # 好像用处不大这个
-button.pack(side='left')
+# button = Button(root, text="鼠标", command=lambda :text.insert('current', "鼠标"))  # 好像用处不大这个
+# button.pack(side='left')
+# current绑定鼠标才有意义
+text.bind('<Button-1>', lambda e: text.insert('current', '鼠标'))
 
 
 # 除了插入, 还能获取值; 注意insert代表的是光标后面那个位置
-button = Button(root, text="获取单", command=lambda :print(text.get('insert')))  # 好像用处不大这个
+button = Button(root, text="获取单", command=lambda :print(text.get('insert')))
 button.pack(side='left')
 
-button = Button(root, text="获取多", command=lambda :print(text.get('1.2', 'end')))  # 好像用处不大这个
+# 给get两个参数则表示获取区间，end表示文件尾，1.end表示第一行行尾； 这里1.5不包含在内
+button = Button(root, text="获取区间", command=lambda :print(text.get('1.2', '1.5')))
 button.pack(side='left')
 
-# 相对位置
-button = Button(root, text="相对", command=lambda :print(text.get('1.2', 'end - 3 chars')))  # 好像用处不大这个
+# 相对位置，第一行的行尾往前三个字符； 这里的chars可以简写成c
+button = Button(root, text="相对", command=lambda :print(text.get('1.2', '1.end - 3 chars')))
 button.pack(side='left')
 
-button = Button(root, text="行尾", command=lambda :print(text.get('1.2', '1.2 lineend')))  # 好像用处不大这个
+# 相对位置，某个字符所在行的行尾
+button = Button(root, text="行尾", command=lambda :print(text.get('1.2', '2.2 lineend')))
 button.pack(side='left')
 
-button = Button(root, text="单词", command=lambda :print(text.get('1.13', '1.13 wordend')))  # 好像用处不大这个
+# 相对位置，某个位置所在单词的词尾（无法识别中文单词，只能简单地以空格、\n等区分
+button = Button(root, text="单词", command=lambda :print(text.get('1.13', '1.13 wordend')))
 button.pack(side='left')
 
+# *******************************************************************************************************************
 root.mainloop()
