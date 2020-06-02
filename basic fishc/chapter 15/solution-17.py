@@ -2,34 +2,37 @@
 # Author: Cynthia
 
 """
-    Tags用法
-    一般用于修改文本的样式，以及将Text中的内容与键盘、鼠标等绑定事件
-    据观察，没有直接的可指定元素索引位置的设置样式函数
+    Tags用法，给某些内容而不是位置做标记
+    Text里修改样式，绑定事件等不能直接根据位置，需要根据这个位置的内容对象
+    注意，SEL_FIRST, SEL_LAST是Mark， 而SEL是Tag
+"""
+"""
+    先演示修改样式
 """
 
 from tkinter import *
-
 root = Tk()
+# **************************************************************************************************************
 
 text = Text(root, width=30, height=10)
-
 text.pack()
 
 text.insert(END, "I love FishC.com发达的发掘的咖啡机艾迪康缴费拉戴假发来得及法拉第街坊邻居打发")
 
+# 先演示原生的tag，SEL
 # 注意SEL的tag_config是动态的，即当tag变化后，后面的设置会自动在tag对应的新内容上生效
 # 比如这里设置背景和字体颜色， 重新选中内容，样式会在新的内容上生效
+# 由于SEL的后生效特性，其优先级较低，如果有其他tag设置了样式，那么SEL的样式会被覆盖
 text.tag_config(SEL, background='yellow', foreground='blue')
 
-# 还可以手动插入tag， 手动插入的tag则是一次性的， 把这几个位置对应内容删了， 新的内容背景不会变黑
+# 还可以手动插入tag， 手动插入的tag则是一次性的， 插入后就建立的对象绑定关系
 # tag_add有多个位置参数时，前两个识别为区间，其他的识别为特定位置
 text.tag_add('tag1', '1.7', '1.12', '1.14')
 text.tag_config('tag1', background='black')
+text.insert('1.7', '新新新新新')  # 这里insert之后，后面的tag_config改的还是原1.7-1.12和1.14位置的内容
 text.tag_config('tag1', background='grey')
-# 此外， tag后覆盖前，这里生效的背景是grey
-# 但注意，选中后不糊变成黄， 点了按钮也不会变红， SEL的行为比较特殊， 设置在前， 选中在后， 选中这一行为不会覆盖其他设置
-# SEL只在自己内部遵守后覆盖前规则
-
+# 如果想要样式在新插入的内容上重置，可以插入后在tag_add, tag_config一次，或者插入时直接指定tag名，表示重新绑定
+text.insert('1.7', "newnewnewnewnew", ('tag1',)) # 注意，不会对原1.7-1.12和1.14位置的内容样式产生影响
 
 # 其他可设置的东西
 # font控制字体
@@ -63,18 +66,6 @@ text.tag_config(SEL, underline=True)
 # 是否自动换行， NONE, CHAR, WORD
 text.tag_config(SEL, wrap=NONE)
 
-def f():
-    print(text.get(SEL_FIRST, SEL_LAST))
-    text.tag_config(SEL, background='red', foreground='blue')
-    # insert可以有第三个参数， tag， 表示直接把tag配置拿过来用到插入的内容上， 和原tag的位置信息无半毛钱关系
-    # 这里可以指定多个tag， 用text.tag_lower("tag1")和tag_raise去设定优先级
-    text.insert(INSERT, "这里是新的内容新的内容新的内容", ("tag1",))
-
-# 注意SEL是一个tag， 对应选中的内容；SEL_FIRST, SEL_LAST是俩索引，对应位置
-button = Button(root, text="点我", command=f)
-button.pack()
-
-
-
+# ********************************************************************************************************************
 root.mainloop()
 
