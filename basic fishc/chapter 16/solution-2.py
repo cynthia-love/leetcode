@@ -23,7 +23,7 @@ turtle = pg.image.load("img/turtle.png")
 # 注意后两个数是宽度和高度, move后保持不变
 pos = turtle.get_rect()
 
-speed = [-2, 1]  # 往左上方移动
+speed = [-6, 3]  # 往左上方移动
 
 # 死循环, 确保游戏可以不断进行下去
 clock = pg.time.Clock()
