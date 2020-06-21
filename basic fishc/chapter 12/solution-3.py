@@ -50,6 +50,8 @@ class C:
         self.t = None
 
     def __str__(self):
+        # time模块的strftime不支持毫秒，datetime模块的支持小数点后6位，毫秒取3位就行
+        # datetime.strftime(now, "%Y-%m-%d %H:%M:%S:%f")[:-3]
         return time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(self.times[0][0]))+"~"+ \
                time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(self.times[0][1]))+" "+ \
                 "{:.3f}".format(self.times[0][2])
