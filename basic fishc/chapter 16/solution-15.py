@@ -2,12 +2,14 @@
 # Author: Cynthia
 
 """
-    农民吃苹果
+    第二个简单例子, 农民吃苹果
     上一个游戏的升级版, 加入动态贴图什么的
     这里用到更多的碰撞检测函数, 简单做个说明
     1. pygame.sprite.spritecollide(sprite,sprite_group,bool), 第一个精灵会与第二个精灵组里的
-    精灵一个个去进行矩形碰撞检测, 并将有发生碰撞的作为一个列表返回; bool为True删除组中碰撞的, False不删
-    2. pygame.sprite.spritecollideany(), 与1类似, 但返回是否存在碰撞的bool值
+    精灵一个个去进行矩形碰撞检测, 并将有发生碰撞的作为一个列表返回; bool为True删除组中碰撞的, False不删,
+    注意, 这个函数还有第四个参数, 指定碰撞类型, 可以指定pg.sprite.collide_mask就可以实现一对多
+    的像素遮罩检测
+    2. pygame.sprite.spritecollideany(), 与1类似, 但返回是否存在碰撞的bool值, 且没有是否删除参数
     3. pygame.sprite.groupcollide(), 检测两个组之间的矩形碰撞检测
     4. pygame.sprite.collide_rect(sprite_1,sprite_2), 两个精灵之间的矩形检测, 返回bool
     还有一个类似的pygame.sprite.collide_rect_ratio( 0.5 )(sprite_1,sprite_2), 指定碰撞多少算碰
@@ -18,7 +20,9 @@
 
     另外, 注意几个点
     1. 农民和苹果具有不同的行为, 不要用同一个精灵类
-    2. 动画的动作刷新频率不要和整个帧数一致(只能做到小于, 做不到大于)
+    2. 动画的动作刷新频率不要和整个帧数一致(只能做到小于, 做不到大于), 这样可以既保证整体刷新频率够高,
+    不晃眼, 又能自定义农民的动作不过快. 用pg.time.get_ticks()实现.
+
     3. 类封装的时候要足够完备, 且对外暴露的要可理解, 比如暴露direction就比暴露行数index好
     4. update函数调的比较频繁, 里面可能用到的子图对象等在初始化的时候就要生成, 不然随着时间进行,
     会生成越来越多的对象, 影响整体游戏性能
@@ -238,7 +242,7 @@ class Health(pg.sprite.Sprite):
         self.color = color
         self.percent = 0
 
-        self.font = pg.font.Font('img/Symbol.ttf', int(height*0.7))
+        self.font = pg.font.Font('font/Symbol.ttf', int(height*0.7))
 
         self.draw(self.percent)
 
@@ -408,6 +412,7 @@ while True:
     if score < APPLE_NUM:
         # 如果动了, 检测碰撞, 全部检测完, 更新分数
         # 如果不想全部遍历也可以加一步1对多的矩形碰撞检测; 注意这里的False, 这一步不删apple精灵
+        # 这里可以直接指定第四个参数实现一对多的像素遮罩检测
         if velocity.speed and pg.sprite.spritecollideany(farmer, group_apple, False):
             for apple in group_apple:
                 if pg.sprite.collide_mask(farmer, apple):
