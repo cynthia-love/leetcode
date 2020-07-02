@@ -2,7 +2,7 @@
 # Author: Cynthia
 
 """
-    将pygame每一帧转成gif和mp4
+    将pygame每一帧分别转成gif和mp4格式
 """
 import cv2
 import sys
