@@ -21,7 +21,7 @@
 - [while和for](chapter%2004/solution-4.py)
 - [break和continue](chapter%2004/solution-5.py)
 
-##### chapter 05; 列表、元组和字符串, 即序列
+##### chapter 05; 序列: 列表、元组和字符串
 - [列表list](chapter%2005/solution-1.py)
 - [元组tuple](chapter%2005/solution-2.py)
 - [字符串str](chapter%2005/solution-3.py)
