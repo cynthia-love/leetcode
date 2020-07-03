@@ -63,21 +63,22 @@ print(s[:2])
 print(s[2:])
 # 切片还可以加第三个参数, 步长
 print(s[2:7:2])  # 2 3 4 5 6, 6大于了5, 取小的, 2 3 4 5, 步长2, 2 4, 所以输出c e
-print(s[::-2])  # 步长甚至可以是负数, 表示倒着来, 但是步长为负时好像不能设置第一第二个参数
+print(s[::-2])  # 步长甚至可以是负数, 表示倒着来
+print(s[7:1:-2])  # 步长为负时, 且有参数1和2, 那么参数1得比参数2大
 
 # 列表操作符
 x = [1, 2, 5]
 y = [1, 2, 3, 8]
 print(x > y)  # 比较运算符可以直接用于列表, 逻辑类似字符串比较, 从前往后一个个比, 谁先遇到相对大的谁就大
-z = x+y  # 等价于extend
+z = x+y  # 等价于extend, 和numpy里的对应位置相加区别开来
 print(z)
-print(z*2)  # 重复两次
+print(z*2)  # 重复两次, 和numpy里的元素乘以2区别开来
 z *= 3
 print(z)
 print(5 in x)
 print(5 not in x)
 k = [1, 2, [3, 4], 5]
-print([3, 4] in k)  # True
+print([3, 4] in k)  # True, list认为是基本数据类型, 直接比
 print(k[2][0])
 
 # 其他方法
@@ -90,3 +91,8 @@ l.reverse()
 print(l)
 l.sort(key=lambda x: x, reverse=False)
 print(l)
+
+# reverse和sort有俩对应的不改变自身的函数
+# reversed比较特殊, 返回的是个迭代器
+print(list(reversed(l)))  # 得强制类型转换
+print(sorted(l, reverse=False))

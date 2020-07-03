@@ -13,6 +13,7 @@ ans = "我爱小甲鱼"
 while True:
     pin = input("请输入小甲鱼最想听的一句话:")
     if pin == ans: break
+    # 这种if里可以中断的, 后面的不加else可以, 不然建议加
     print("抱歉, 错了, 请重新输入(输入正确才能退出游戏)")
 
 print("哎呦, 猜对啦!")
@@ -32,4 +33,11 @@ while count < 10:
         count += 1
         continue
     print(count)
+    count += 1
+
+# 上面这个写的有点绕, 其实就是输出奇数
+count = 0
+while count < 10:
+    if count % 2 == 1:
+        print(count)
     count += 1

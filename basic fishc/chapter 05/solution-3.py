@@ -17,10 +17,12 @@ b = a[:5]+"****"+a[5:]
 print(b)
 
 # 内置方法, 都是返回一个新的, 而不是在原字符串上改
+# 即相比list, str更接近于tuple
 c = "aAAAAAAA BBB"
 print(c.capitalize())  # 注意是直接返回一个新的字符串, 大小写互换?
 print(c.casefold())  # 全部转换为小写
-print(c.center(18, "*"))  # 居中, 左右用*填充; 当width小于等于字符串长度时无变化
+print(c.center(18, "*"))  # 居中, 参数2指定填充字符; 当width小于等于字符串长度时无变化
+# 注意中文的时候会有问题, 会补过多的填充字符, 直接把一个中文字符按长度2算好像也不行
 print(c.count("A", 0, 3))  # start和end参数可不指定
 print(c.encode("utf-8"))  # 用指定的编码格式对字符串进行编码
 print(c.endswith("A BBB", 0, 13))  # start end可不指定
@@ -77,6 +79,6 @@ print("\'")  # 外层是双引号这里加\也是没问题的
 print("\"")
 print("aaa\tbbb\nccc")
 print("aaa\\bbb")
-print("\x32")
+print("\x32")  # 等价于"2"
 
 

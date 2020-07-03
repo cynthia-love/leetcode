@@ -2,7 +2,7 @@
 # Author: Cyntia
 
 """
-    闲聊数据类型
+    闲聊基本数据类型
 """
 
 # 整型, python3 整型长度不受限制
@@ -12,10 +12,10 @@ print(1111111111111111111111111111111111111111111111111111111111111111111111)
 print(0.0000000000000000000000000000000000000000000000000000025)
 
 # 布尔类型True/False, 可以与整型一起运算, 相当于1/0
-print(True+True)
+print(True+True)  # 2
 print(bool(8))  # True
-print(bool(-7))  # True, 只要不是0, 负数也是True
-print(bool(1.2))  # True
+print(bool(-7))  # True, 只要不是0, 负数也是True!!!
+print(bool(1.2))  # True, 小数也是True!!!
 
 # int可以把str和float转换成整数类型
 print(int("123"))
