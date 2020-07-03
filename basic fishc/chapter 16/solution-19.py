@@ -150,7 +150,7 @@ for each in images:
 mp4_writer.release()
 # 根据图片张数和视频帧数, 可以直接算出来时长, 比如1000张图, fps取100, 每秒100张, 那总时长10秒
 
-# 完事还可以继续给视频添加背景音乐
+# 完事还可以继续给视频添加背景音乐, 视频处理有专门的包moviepy
 video = VideoFileClip("image/ball.mp4")
 print(video.duration)
 audio = AudioFileClip("sound/bg_music.ogg")
