@@ -4,9 +4,14 @@
 """
     正式的玩球游戏
     搞清楚游戏的几个阶段
-    1. 初始, 一个暂停按钮阶段1
-    2. 点击后, 游戏开始, 进入阶段2, 所有灰色小球随机移动, 摩擦变绿, 移动, 进洞
-    3. 所有小球都进洞, 进入阶段3, 展示结束画面
+    LAUNCH, START, PLAY, PAUSE, WIN, LOSE = 0, 1, 2, 3, 4, 5
+
+    1. 初始START, 一个暂停按钮
+    2. 点击后进入PLAY, 游戏开始, 所有灰色小球随机移动, 摩擦变绿, 移动, 进洞
+    3. 按P键暂停, 进入PAUSE
+    4. 再按P键, 回到PLAY阶段
+    5. 音乐结束前完成, 进入WIN阶段
+    6. 音乐结束未完成, 进入LOSE阶段
 """
 import sys
 import random
@@ -19,17 +24,16 @@ from pygame.locals import *
     第一部分, 常量设置, 像是图片大小什么的, 有些外层也要用到,
     建议直接设置了, 而不要等图片载入后再去获取, 不方便代码编写
 """
-# 常用颜色
+# 通用常量
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0, 0)
 WHITE_TRANS = (255, 255, 255, 150)
 
-# SCREEN相关的
+# SURFACE相关的
 TITLE = 'Play The Ball'
 SIZE = WIDTH, HEIGHT = 1024, 681
 FRAME = 100
 
-# 其他外部需要用到的SURFACE的数据
 SIZE_BALL = WIDTH_BALL, HEIGHT_BALL = 100, 100
 SIZE_GLASS = WIDTH_GLASS, HEIGHT_GLASS = 368, 218
 
@@ -74,7 +78,8 @@ class Ball(pg.sprite.Sprite):
         # 建议外部去设置三个group, 因为涉及统一update什么的, 没必要遍历去判断每个的state
 
     # 根据当前位置和速度去更新下一帧位置
-    # 注意update函数只有批量更新时叫这个才有意义, 如果一个个更新, 叫move什么的更好理解
+    # 注意update函数只有批量更新时叫这个名才有意义, 如果一个个更新, 叫move什么的更好理解
+    # surface用于限制小球位置范围
     def update(self, surface, back=False):
 
         velocity = self.velocity
@@ -138,6 +143,7 @@ class Glass(pg.sprite.Sprite):
         pos = pg.mouse.get_pos()
         self.rect_mouse.center = pos[0]-self.rect.x, pos[1]-self.rect.y
         # 把鼠标位置置为鼠标图片中心位置后, 要判断是否在glass边界外了
+        # 这里的x和y也可以用left, top代替, 一个意思
         self.rect_mouse.x = max(0, self.rect_mouse.x)
         self.rect_mouse.right = min(self.rect.width, self.rect_mouse.right)
         self.rect_mouse.y = max(0, self.rect_mouse.y)
@@ -186,7 +192,7 @@ def randomVelocity():
         if x != 0 and y != 0:
             return [x, y]
 
-# 判断点是否在rect框定的圆内
+# 判断点是否在rect框定的圆内; 矩形判断方法pygame自带
 def collidepoint(rect, point):
 
     distance = sqrt(pow(rect.center[0]-point[0], 2) +
@@ -224,8 +230,6 @@ def main():
 
     # 然后是不同阶段可能用到的素材, 先处理不会变的
     image_bg = pg.image.load("image/background.png").convert_alpha()
-    # 由于get_rect()始终返回原始rect, x和y为0, 这里还是单独声明一个rect变量吧
-    rect_bg = image_bg.get_rect()
 
     image_pause = pg.image.load("image/pause.png").convert_alpha()
     rect_pause = image_pause.get_rect()
@@ -256,10 +260,9 @@ def main():
     group_ball_2 = pg.sprite.Group()
     group_ball_3 = pg.sprite.Group()
 
-    times = 0
-
     # 初始化
     def initialize(stage_to, stage_from):
+        # START阶段不可能有其它来源, 不用判断stage_from
         if stage_to == START:
 
             # 玻璃板位置计算一次就行
@@ -269,11 +272,8 @@ def main():
             # 计算暂停键位置, 后面还会用到暂停键
             rect_pause.x = int((WIDTH-rect_pause.width)/2)
             rect_pause.y = int((HEIGHT-rect_pause.height)/2)
-            # 初始化状态1的球
-            group_ball_1.empty()
-            group_ball_2.empty()
-            group_ball_3.empty()
 
+            # START阶段就要把group_ball_1的小球先画了, 只不过不动
             for i in range(BALL_NUM):
                 pos = random.randint(0, WIDTH - WIDTH_BALL), \
                       random.randint(0, HEIGHT - HEIGHT_BALL)
@@ -287,31 +287,35 @@ def main():
 
                 group_ball_1.add(ball)
 
-        if stage_to == PLAY:
+        # 除非前面有return什么的, 否则不要直接用if代替elif
+        elif stage_to == PLAY:
             nonlocal times
             # PLAY状态可能从START, PAUSE, WIN, LOSE过来
 
             # 隐藏鼠标, 从哪来的都要做这个操作
             pg.mouse.set_visible(False)
 
-            # 计算暂停键位置
+            # 计算右上角暂停键位置
             rect_unpause.x = WIDTH-rect_pause.width-50
             rect_unpause.y = 30
 
-            # 从START, WIN, LOSE来的, 重置定时器和摩擦次数
+            # 从START, WIN, LOSE来的, 则要把PLAY状态清空
+            # START例外一点, 小球不清
             if stage_from in [START, WIN, LOSE]:
-                pg.time.set_timer(TIMER, 0)  # 参数2设置0表示取消
-                pg.time.set_timer(TIMER, 1000)
-                times = 0
-
-            # 从START, WIN, LOSE来重新播放音乐
-            # 从PAUSE来, 继续播放音乐
-            if stage_from in [START, WIN, LOSE]:
+                # 重新播放音乐
                 pg.mixer_music.stop()
                 pg.mixer_music.play()
-            else: pg.mixer_music.unpause()
 
-            # 如果是从WIN, LOSE来的, 重置小球
+                # 计时器重置
+                pg.time.set_timer(TIMER, 0)  # 参数2设置0表示取消
+                pg.time.set_timer(TIMER, 1000)
+                # 鼠标摩擦次数重置
+                times = 0
+            elif stage_from == PAUSE:
+                pg.mixer_music.unpause()
+
+            # 如果是从WIN, LOSE来的, 还要重置小球
+            # 从START来的考虑动画连续性, 就不重置了
             if stage_from in [WIN, LOSE]:
                 # 初始化状态1的球
                 group_ball_1.empty()
@@ -332,7 +336,8 @@ def main():
 
                     group_ball_1.add(ball)
 
-        if stage_to == PAUSE:
+        # 其他几个状态来源都是单一的PLAY
+        elif stage_to == PAUSE:
 
             # 显示鼠标
             pg.mouse.set_visible(True)
@@ -343,29 +348,32 @@ def main():
             # 音乐暂停
             pg.mixer_music.pause()
 
-        if stage_to == LOSE:
+        elif stage_to == LOSE:
+
+            pg.mouse.set_visible(True)
 
             channel = pg.mixer.find_channel()
             channel.play(sound_loser)
             channel.queue(sound_laugh)
 
-            pg.mouse.set_visible(True)
-
             text_rect.x = int((WIDTH-text_rect.width)/2)
             text_rect.y = int((HEIGHT-text_rect.height)/2)
 
-        if stage_to == WIN:
+        elif stage_to == WIN:
+
+            pg.mouse.set_visible(True)
+
             pg.mixer_music.stop()
 
             channel = pg.mixer.find_channel()
             channel.play(sound_winner)
             channel.queue(sound_laugh)
 
-            pg.mouse.set_visible(True)
             rect_win.x = int((WIDTH-rect_win.width)/2)
             rect_win.y = int((HEIGHT-rect_win.height)/2)
 
 
+    # PLAY阶段用到碰撞后的速度重置函数
     # 初始状态所有小球不碰撞, 速度随机
     # 然后update一次, 小球移动, 可能达到碰撞状态,
     # 如果碰了, 那么小黑球直接反向, 一定可以达到上一次不碰撞状态
@@ -401,6 +409,7 @@ def main():
             finded = False
             while not finded:
                 # 给这批碰撞的绿球赋新速度
+                # 注意, 绿球碰了的才赋新速度
                 for each in group_ball_2:
                     if each in collides21 or each in collides22:
                         each.velocity = randomVelocity()
@@ -419,19 +428,16 @@ def main():
                     if len(target22[each]) == 1:
                         target22.pop(each)
 
-                print(collides21, collides22, target21, target22)
                 # 看老的碰撞关系更新后是否还碰撞
                 for each in collides21:
                     for item in collides21[each]:
                         if each in target21 and item in target21[each]:
                             finded = False
-                            print("21")
 
                 for each in collides22:
                     for item in collides22[each]:
                         if each in target22 and item in target22[each]:
                             finded = False
-                            print("22r")
 
                 # 不管找没找到合适的速度, 先把小绿球位置回退了
                 group_ball_2.update(screen, True)
@@ -448,9 +454,11 @@ def main():
 
     stage = START
     initialize(stage, LAUNCH)
+    times = 0
 
     while True:
         # 循环里面同样分公共代码和各阶段执行的代码
+        # 公共的放外面就行
         event = pg.event.get()
         for e in event:
             if e.type == QUIT:
@@ -475,13 +483,13 @@ def main():
 
             # 这里状态转换为什么要放下面, 因为initialize完一些素材就变了
             # 只有应该走新stage的渲染逻辑而不是老的; 放上面改完会接着往下走
+            # 其实其他控制类的事件也能放在下面, 无非是改完, 下一帧update, draw
             for e in event:
                 if e.type == MOUSEBUTTONDOWN and collidepoint(rect_pause, e.pos):
                     stage = PLAY
                     initialize(stage, START)
 
         elif stage == PLAY:
-
 
             screen.blit(image_bg, (0, 0))
 
@@ -502,9 +510,9 @@ def main():
                 if e.type == GAMEOVER:
                     stage = LOSE
                     initialize(stage, PLAY)
-                if e.type == MOUSEMOTION:
+                elif e.type == MOUSEMOTION:
                     times += 1
-                if e.type == TIMER:
+                elif e.type == TIMER:
                     for each in group_ball_1:
                         if each.check(times):
                             each.image = each.image_green
@@ -513,33 +521,34 @@ def main():
                             group_ball_2.add(each)
                             times = 0
 
-                if e.type == KEYDOWN:
+                elif e.type == KEYDOWN:
+                    # 不要随便用一堆if, 上面的if可能会改动一些东西对下面的if有影响; 用elif
                     if e.key == K_p:
                         stage = PAUSE
                         initialize(stage, PLAY)
-                    if e.key == K_w:
+                    elif e.key == K_w:
                         for each in group_ball_2:
                             # 注意同一个方向速度绝对值不能过大, 不然相撞以后
                             # 随机出来新速度可能无法达到逃逸速度
                             each.velocity = velocity1step(each.velocity, 'n')
-                    if e.key == K_s:
+                    elif e.key == K_s:
                         for each in group_ball_2:
                             each.velocity = velocity1step(each.velocity, 's')
-                    if e.key == K_a:
+                    elif e.key == K_a:
                         for each in group_ball_2:
                             each.velocity = velocity1step(each.velocity, 'w')
-                    if e.key == K_d:
+                    elif e.key == K_d:
                         for each in group_ball_2:
                             each.velocity = velocity1step(each.velocity, 'e')
 
-                    if e.key == K_SPACE:
+                    elif e.key == K_SPACE:
                         for each in group_ball_2:
                             if isCover(each):
                                 each.velocity = [0, 0]
                                 group_ball_2.remove(each)
                                 group_ball_3.add(each)
-                                channel = pg.mixer.find_channel()
                                 if len(group_ball_3) < BALL_NUM:
+                                    channel = pg.mixer.find_channel()
                                     channel.play(sound_hole)
                                 else:
                                     stage = WIN
@@ -552,7 +561,7 @@ def main():
             group_ball_2.draw(screen)
             group_ball_3.draw(screen)
 
-            screen_alpha.fill(WHITE_TRANS)
+            screen_alpha.fill(WHITE_TRANS) # 半透明遮罩
             screen_alpha.blit(image_pause, rect_pause)
             screen.blit(screen_alpha, (0, 0))
 
@@ -577,9 +586,6 @@ def main():
                     # 这里要直接跳出循环
                     sys.exit()
 
-
-
-
         elif stage == LOSE:
             screen.fill(WHITE)
             screen.blit(text_lose, text_rect)
@@ -600,7 +606,6 @@ if __name__ == '__main__':
     except SystemExit as e:
         print("sys.exit() with code {}".format(e.code))
         raise e
-        # print("other code")  # 这里的代码是reach不到的
         # sys.exit()会抛出SystemExit异常
         # 如果不捕获, 则python解释器会退出
         # 捕获了, 如果还想实现提前退出,
