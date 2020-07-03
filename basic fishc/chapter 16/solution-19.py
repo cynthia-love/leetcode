@@ -95,6 +95,7 @@ clock = pg.time.Clock()
 
 count, frames = 1, 1000
 images = []
+print("开始")
 while count <= frames:
     for e in pg.event.get():
         if e.type == QUIT:
@@ -159,4 +160,22 @@ print(audio.duration)
 # 视频过长, 后面没声音; 音频过长, 视频虽然显示长度长, 但播放一半闪退
 video = video.set_audio(audio)
 video.write_videofile("image/ball2.mp4")
+
 # 更灵活的处理方法是截取视频不同的subclip, 混淆声音后设为背景, 再把各视频clip拼接起来
+# 比如以bass2.mp4为基础, 在10s位置再混入笑声
+video = VideoFileClip("image/ball2.mp4")
+video_clip1 = video.subclip(0, 10)
+video_clip2 = video.subclip(10, video.duration)
+
+laugh = AudioFileClip("sound/laugh.wav")
+
+audio_clip1 = video_clip1.audio
+audio_clip2 = video_clip2.audio
+
+# 注意混入不需要俩音频一般长
+audio_clip2 = CompositeAudioClip([audio_clip2, laugh])
+
+video_clip2 = video_clip2.set_audio(audio_clip2)
+
+video = concatenate_videoclips([video_clip1, video_clip2])
+video.write_videofile("image/ball3.mp4")
