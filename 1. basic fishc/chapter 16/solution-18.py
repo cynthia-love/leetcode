@@ -138,7 +138,15 @@ class Glass(pg.sprite.Sprite):
         self.image.blit(self.image_glass, (0, 0))
         self.rect = self.image.get_rect()
 
+        # init里也可以把image_mouse画上, 初始位置左上角, 并调pg.mouse.set_pos
+        # 不过感觉意义不大, 因为START状态鼠标肯定会移动, 点开始后鼠标图标会瞬移一下
+
     def update_mouse(self):
+        # mouse除了用与glass的相对位置, 还可以在property里建立glass与mouse的位置映射关系
+        # mouse也用相对于屏幕的绝对位置, 这样的话就不用再声明一个Surface了
+        # 但是这样也有问题, main函数里得显式去画鼠标, 而不能实现调一次blit把glass和鼠标都画上
+        # group更是不能用, 因为其draw只会画self.image
+
         # 注意, 获取到的鼠标位置是绝对位置, 要转成相对于glass的相对位置
         pos = pg.mouse.get_pos()
         self.rect_mouse.center = pos[0]-self.rect.x, pos[1]-self.rect.y
@@ -226,6 +234,7 @@ def main():
 
     # 开启全局长按处理逻辑, 长按某一个按键, 100ms后发出第一个KEYDOWN
     # 之后每间隔100ms发出一次KEYDOWN
+    # 不带参数调用表示取消长按逻辑
     pg.key.set_repeat(100, 100)
 
     # 然后是不同阶段可能用到的素材, 先处理不会变的
@@ -610,6 +619,7 @@ if __name__ == '__main__':
         # 如果不捕获, 则python解释器会退出
         # 捕获了, 如果还想实现提前退出,
         # 得显式raise出来或者再调一次sys.exit()
+        # 当然如果后面没其他代码要执行了, 不raise, 直接来个pass等程序结束也行
     except:
         # traceback配合try-except使用, 捕获异常后还能打印traceback信息
         pg.quit()  # pygame.quit()是和pygame.init()对应的, 可多次重复调用, 后面的无效果
