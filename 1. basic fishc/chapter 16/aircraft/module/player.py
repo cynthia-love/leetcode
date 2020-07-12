@@ -6,6 +6,7 @@
 """
 
 import pygame as pg
+from module.const import *
 
 class Player(pg.sprite.Sprite):
 
@@ -56,6 +57,8 @@ class Player(pg.sprite.Sprite):
         self.y = self.height_screen-self.height-60
 
     # 添加动画效果, 注意动画的速度要独立于游戏本身的帧数
+    # 这里有个问题, 当生命还有剩余的时候, player飞机怎么在坠毁动画完成后通知主应用可以重置飞机了
+    # 用pg.event.post()
     def update(self):
         tick = pg.time.get_ticks()
         if tick-self.tick >= self.delay:
@@ -66,7 +69,8 @@ class Player(pg.sprite.Sprite):
                 if index < len(self.image_destroy) - 1:
                     self.image = self.image_destroy[index + 1]
                 else:
-                    self.reset()
+                    # 第二个参数比如KEYDOWN里的key, 不过貌似不指定也不报错
+                    pg.event.post(pg.event.Event(EVENT_PLAYER_DESTROYED, dict={"some_attr": 1}))
 
             self.tick = tick
 

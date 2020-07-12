@@ -7,9 +7,14 @@
 import random
 import pygame as pg
 
+# 注意const.py里的常量应该是给主函数用的
+WHITE = (255, 255, 255)
+RED = (255, 0, 0)
+GREEN = (0, 255, 0)
+
 class SmallEnemy(pg.sprite.Sprite):
 
-    def __init__(self, screen, speed):
+    def __init__(self, screen, speed, health):
 
         pg.sprite.Sprite.__init__(self)
         self.image1 = pg.image.load("image/enemy1.png").convert_alpha()
@@ -34,6 +39,8 @@ class SmallEnemy(pg.sprite.Sprite):
         self.height_screen = rect_screen.height
 
         self.speed = speed
+        self.health = health
+        self.energy = self.health  # 小飞机也给个能量是为了能和中大飞机用一套能量判断逻辑
 
         self.tick = pg.time.get_ticks()
 
@@ -44,6 +51,7 @@ class SmallEnemy(pg.sprite.Sprite):
     # 跟player一样, 重新开始时提供一个重置函数
     def reset(self):
         self.active = True
+        self.energy = self.health
         self.x = random.randint(0, self.width_screen-self.width)
         self.y = random.randint(-5*self.height_screen-self.height, 0-self.height)
 
@@ -73,6 +81,9 @@ class SmallEnemy(pg.sprite.Sprite):
                 self.tick = tick
 
 
+    # 思考一个问题, 既然有rect了, 那还整x, y, width什么的
+    # 如果只是单纯赋值, 没有其他逻辑, 那这么干到底有没有意义
+    # 虽然用的时候self.x, self.y更简洁, 但增加代码复杂度的代价是不是有点高
     def _getx(self): return self.rect.x
     def _setx(self, value): self.rect.x = value
     x = property(_getx, _setx)
@@ -104,12 +115,14 @@ class SmallEnemy(pg.sprite.Sprite):
 
 class MidEnemy(pg.sprite.Sprite):
 
-    def __init__(self, screen, speed):
+    def __init__(self, screen, speed, health):
 
         pg.sprite.Sprite.__init__(self)
         self.image1 = pg.image.load("image/enemy2.png").convert_alpha()
         self.image = self.image1
         self.rect = self.image.get_rect()
+
+        self.image_hit = pg.image.load("image/enemy2_hit.png").convert_alpha()
 
         self.image_destroy = [
             pg.image.load("image/enemy2_down1.png").convert_alpha(),
@@ -122,22 +135,38 @@ class MidEnemy(pg.sprite.Sprite):
         self.sound_destroy.set_volume(0.8)
         self._active = True  # 加入毁灭状态, 则需要有一个字段存这个状态
 
+        self.screen = screen
         rect_screen = screen.get_rect()
 
         self.width_screen = rect_screen.width
         self.height_screen = rect_screen.height
 
         self.speed = speed
+        self.health = health
+        self.energy = self.health
+
+        self.hit = False
 
         self.tick = pg.time.get_ticks()
 
         # 初始化位置, 小飞机在-5个屏幕高度到0之间
         self.x = random.randint(0, self.width_screen-self.width)
-        self.y = random.randint(-10*self.height_screen-self.height, 0-self.height)
+        self.y = random.randint(-10*self.height_screen-self.height, -self.height_screen-self.height)
+
+    # 中大飞机提供一个画血量函数, 免得在主函数里写太多代码
+    def showHealth(self):
+        percent = self.energy/self.health
+        pg.draw.line(self.screen, WHITE, (self.rect.left, self.rect.top-5),
+                     (self.rect.right, self.rect.top-5), 2)
+        color = GREEN if percent > 0.2 else RED
+        pg.draw.line(self.screen, color, (self.rect.left, self.rect.top-5),
+                     (self.rect.left+self.rect.width*percent, self.rect.top-5), 2)
 
     # 跟player一样, 重新开始时提供一个重置函数
     def reset(self):
         self.active = True
+        self.energy = self.health
+        self.hit = False
         self.x = random.randint(0, self.width_screen-self.width)
         self.y = random.randint(-10*self.height_screen-self.height, 0-self.height)
 
@@ -150,9 +179,13 @@ class MidEnemy(pg.sprite.Sprite):
         if self.active:
             self.rect.top += self.speed
 
+            if self.hit: self.image = self.image_hit
+            else: self.image = self.image1
+
             # 这里没限制下方60像素, 即小飞机可以通过状态栏
             if self.rect.top > self.height_screen:
                 self.reset()
+
         # 否则播放破坏效果
         else:
             tick = pg.time.get_ticks()
@@ -192,11 +225,13 @@ class MidEnemy(pg.sprite.Sprite):
 
 class BigEnemy(pg.sprite.Sprite):
 
-    def __init__(self, screen, speed, frame):
+    def __init__(self, screen, speed, health, frame):
 
         pg.sprite.Sprite.__init__(self)
         self.image1 = pg.image.load("image/enemy3_n1.png").convert_alpha()
         self.image2 = pg.image.load("image/enemy3_n2.png").convert_alpha()
+
+        self.image_hit = pg.image.load("image/enemy3_hit.png").convert_alpha()
 
         self.sound_fly = pg.mixer.Sound("sound/enemy3_flying.wav")
         self.sound_fly.set_volume(0.8)
@@ -218,12 +253,17 @@ class BigEnemy(pg.sprite.Sprite):
         self.sound_destroy.set_volume(0.8)
         self._active = True  # 加入毁灭状态, 则需要有一个字段存这个状态
 
+        self.screen = screen
         rect_screen = screen.get_rect()
 
         self.width_screen = rect_screen.width
         self.height_screen = rect_screen.height
 
         self.speed = speed
+        self.health = health
+        self.energy = self.health
+
+        self.hit = False
 
         self.delay = int(1000/frame)
 
@@ -231,11 +271,22 @@ class BigEnemy(pg.sprite.Sprite):
 
         # 初始化位置, 小飞机在-5个屏幕高度到0之间
         self.x = random.randint(0, self.width_screen-self.width)
-        self.y = random.randint(-5*self.height_screen-self.height, 0-self.height)
+        self.y = random.randint(-15*self.height_screen-self.height, -5*self.height_screen-self.height)
+
+    # 中大飞机提供一个画血量函数, 免得在主函数里写太多代码
+    def showHealth(self):
+        percent = self.energy/self.health
+        pg.draw.line(self.screen, WHITE, (self.rect.left, self.rect.top-5),
+                     (self.rect.right, self.rect.top-5), 2)
+        color = GREEN if percent > 0.2 else RED
+        pg.draw.line(self.screen, color, (self.rect.left, self.rect.top-5),
+                     (self.rect.left+self.rect.width*percent, self.rect.top-5), 2)
 
     # 跟player一样, 重新开始时提供一个重置函数
     def reset(self):
         self.active = True
+        self.energy = self.health
+        self.hit = False
         self.played = False
 
         self.x = random.randint(0, self.width_screen-self.width)
@@ -260,11 +311,16 @@ class BigEnemy(pg.sprite.Sprite):
             if self.rect.top > self.height_screen:
                 self.reset()
 
-            # 更新图片
-            tick = pg.time.get_ticks()
-            if tick - self.tick >= self.delay:
-                self.image = self.image1 if self.image == self.image2 else self.image2
-                self.tick = tick
+            if self.hit:
+                self.image = self.image_hit
+            else:
+                if self.image == self.image_hit: self.image = self.image1
+                # 动画效果
+                else:
+                    tick = pg.time.get_ticks()
+                    if tick - self.tick >= self.delay:
+                        self.image = self.image1 if self.image == self.image2 else self.image2
+                        self.tick = tick
         else:
             tick = pg.time.get_ticks()
             if tick - self.tick >= self.delay:
