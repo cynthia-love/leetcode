@@ -4,6 +4,10 @@
 """
 
 """
+import os
+import sys
+import copy
+from os import system
 from threading import Thread
 from base64 import b64encode
 from re import match
@@ -37,10 +41,12 @@ def main():
 
     # 处理用户输入, 示例:　python imms.py -worse -c "2020-06-29 06:00"
     print("**********************************************************************************************************")
-    print("参数说明: -f 频次过滤阈值, 默认不过滤 -f2 基准时段的频次过滤阈值 -l 分析时长, 默认10 -c 分析时段末, 默认上一分钟")
-    print("-t 基准时段末, 默认上周 -m 打印条数, 默认20 -s 待分析接口文件, 支持csv和xlsx -e 不分析接口文件 -n 登录名 -p 秘钥")
-    print("-worse, 按交易量增加, 成功率降低, 耗时增加排序 -better 按交易量减少, 成功率增加, 耗时降低排序; 默认按变化绝对值排序")
-    print("-sys mobs/ecbpin/ecbpout, 指定分析系统, 默认mobs, 不区分大小写")
+    print("IMMS参数说明: -f 频次阈值, 默认全量 -f2 基准时段频次阈值 -l 分析时长, 默认10 -c 分析时段, 默认上一分钟")
+    print("-t 基准时段, 默认上周 -m 打印条数, 默认20 -s 接口文件, 支持csv和xlsx -e 排除接口文件 -n 登录名 -p 秘钥")
+    print("-worse, 按交易量增加, 成功率降低, 耗时增加排序 -better 按交易量减少, 成功率增加, 耗时降低排序; 默认混排")
+    print("-i 条数, 分析交易量排名前x的接口, 可与-s同步生效; -sys mobs/ecbpin/ecbpout, 指定分析系统, 默认mobs")
+    print("-verbose 此参数可以给接口增加更多调用信息, 要保证当前目录有h5_api_all.xlsx, 不能改名, 没有请先执行scan")
+    print("如果同时指定-s -e -i, 则先提取指定接口, 再去掉要排除的, 再从中选取前x个, 指定两个参数同理")
     print("**********************************************************************************************************")
 
     login_name, login_password, now = None, None, datetime.now()
@@ -51,7 +57,16 @@ def main():
 
     isworse, isbetter = False, False
 
+    isprime = 0
+
+    isverbose = False
+
+    file_verbose = "h5_api_all.xlsx"
+
+    h5_api_all = defaultdict(dict)
+
     system_process = 'MOBS'
+
     for i in range(len(argv)):
         if argv[i] == '-l' and argv[i + 1:]:
             s = argv[i + 1]
@@ -126,13 +141,30 @@ def main():
         elif argv[i] == '-better':
             isbetter = True
         elif argv[i] == '-sys' and argv[i + 1:]:
-            id = argv[i+1].upper()
+            id = argv[i + 1].upper()
             if id in ['MOBS', 'ECBPIN', 'ECBPOUT']:
                 system_process = id
             else:
                 print("无效的系统编号！")
                 return
-    print("当前分析系统: {}".format(system_process))
+        elif argv[i] == '-i' and argv[i + 1:]:
+            s = argv[i + 1]
+            if match(r"[0-9]+", s):
+                isprime = int(s)
+            else:
+                print("无效的-i参数！")
+                return
+
+        elif argv[i] == '-verbose':
+
+            if isfile(file_verbose):
+                isverbose = True
+            else:
+                print("未检测到h5_api_all.xlsx, 无法开启-verbose")
+                return
+
+
+    print("分析系统: ", system_process)
     # 先计算四个时间点, 得到当前时间段, 基准时间段
     if not argv_t: argv_t = argv_c - timedelta(weeks=1)
     time_end, time_start = argv_c - timedelta(minutes=1), argv_c - timedelta(minutes=argv_l)
@@ -141,6 +173,27 @@ def main():
     time_start, time_end = t2s(time_start), t2s(time_end)
     base_start, base_end = t2s(base_start), t2s(base_end)
 
+    # 读取接口扫描文档
+    if isverbose:
+        try:
+            data = read_excel(file_verbose, usecols=[0, 2, 4, 5, 6], header=None, skiprows=[0])
+            # 由于api扫描文档有单元格归并, 这里需要把NaN都填上值
+
+            data[0].fillna(method='ffill', inplace=True)
+            data[2].fillna(method='ffill', inplace=True)
+            data[5].fillna(value="", inplace=True)
+            data[6].fillna(value="", inplace=True)
+
+            data[7] = data[0] + "\\" + data[2] + "\\" + data[4]
+
+            for index, row in data.iterrows():
+                h5_api_all[row[7]]['des'] = row[5]
+                h5_api_all[row[7]]['api'] = row[6]
+            print("详情模式: 是")
+        except:
+            print("接口扫描文档载入失败, 无效的h5_api_all.xlsx!")
+            sys.exit(1)
+
     # 再看看需不需要特殊标记本次涉及的接口
     if api_file:
         if api_file.endswith(".csv"):
@@ -148,12 +201,14 @@ def main():
         else:
             apis = set(read_excel(api_file, usecols=[0], header=None, skiprows=[0])[0].values)
 
-    print("需要特别分析的接口:", apis if apis else "无")
+
+    print("指定接口: ", apis if apis else "无")
 
     if api_file_e:
         apis_e = set(read_excel(api_file_e, usecols=[0], header=None, skiprows=[0])[0].values)
 
-    print("需要排除分析的接口:", apis_e if apis_e else "无")
+    print("排除接口: ", apis_e if apis_e else "无")
+    print("高频过滤: ", "前{}".format(isprime) if isprime else "否")
 
     # 再处理账户名, 密码
     url_login_info = getpath("login_info.npy")
@@ -239,7 +294,6 @@ def main():
     base_data = pull(login_name, userAuthSession, base_url, base_start, base_end, "transCode")
     print("数据拉取成功...")
 
-
     # 按secondDimensionsNo将时间段内的数值加总
     def handle_res(res):
         dict_res = defaultdict(list)
@@ -259,18 +313,47 @@ def main():
 
     # dict_time_host, dict_time_data, dict_base_data = handle_res(time_host), handle_res(time_data), handle_res(base_data)
     dict_time_data, dict_base_data = handle_res(time_data), handle_res(base_data)
-    # print(dict_time_data['TR0398'])
-    # print(dict_base_data['TR0398'])
+    # 把原始数据存起来, 避免处理过程中有丢失
+    dict_time_data_back = copy.deepcopy(dict_time_data)
+    dict_base_data_back = copy.deepcopy(dict_base_data)
 
-    len_trancode = max([len(x) for x in dict_time_data.keys()])+11
+    # -s -e -i参数的关系需要好好理一下, -s和-e的关系简单, 先处理
+    # 如果api有, 则会排除不要分析的; 如果api没有, 还是未空set
+    apis = set([x for x in apis if x not in apis_e])
+    if isprime:
+        # apis为空的情况, 要么本来就为空, 要么排除apis_e之后为空, 不管怎样样, 这里再排除一次比较保险
+        if not apis:
+            apis = set(
+                [x[0] for x in sorted(dict_time_data.values(), key=lambda item: item[2], reverse=True) if x[0] not in apis_e][:isprime])
+        else:
+            # apis不为空的情况, 那么前面肯定已经把apis_e排除了, 所以这里不用再and一个not in apis_e条件
+            apis = set(
+                [x[0] for x in sorted(dict_time_data.values(), key=lambda item: item[2], reverse=True) if x[0] in apis][:isprime])
+
+    sum1 = sum([x[2] for x in dict_time_data.values()]) / argv_l
+    sum2 = sum([x[2] for x in dict_base_data.values()]) / argv_l
+    print("分析时段全部接口分均交易量: {:.2f}, 对应基准时段分均交易量: {:.2f}, 增加: {:.2%}".format(sum1, sum2, (sum1 - sum2) / sum2))
+
+    if apis:
+        sum1 = sum([dict_time_data[x][2] for x in dict_time_data if x in apis]) / argv_l
+        sum2 = sum([dict_base_data[x][2] for x in dict_base_data if x in apis]) / argv_l
+
+        if sum2 == 0:
+            percent = 0 if sum1 == 0 else 1
+        else:
+            percent = (sum1 - sum2) / sum2
+
+        print("分析时段指定接口分均交易量: {:.2f}, 对应基准时段分均交易量: {:.2f}, 增加: {:.2%}".format(sum1, sum2, percent))
+
+    len_trancode = max([len(x) for x in dict_time_data.keys()]) + 11
 
     """
     先不和基准比, 单独分析当前时点情况
     """
 
-    def filter_map(dic, index, reverse=False, isapi=True, ismix = True):
+    def filter_map(dic, index, reverse=False, isapi=True, ismix=True):
         v_dic_filter = list(filter(lambda x: x[2] >= argv_l * min_freq and x[0] not in apis_e
-                                   and (not isapi or x[0] in apis if apis else True), dic.values()))
+                                             and (not isapi or x[0] in apis if apis else True), dic.values()))
         return sorted(v_dic_filter, key=lambda x: abs(x[index]) if ismix else x[index], reverse=reverse)
 
     # v_time_host_succ_order, v_time_host_dura_order = filter_map(dict_time_host, 5, isapi=False), filter_map(dict_time_host, 6, True, isapi=False)
@@ -297,7 +380,9 @@ def main():
     """
     # 再处理当前API情况, 先打印成功率为0的, 然后按成功率和耗时排序, 打印出前10
     print('1. 均成功率为零的接口为: ')
-    print("{0:<{width}}{1:<12}{2:<12}{3:<18}{4:<20}".format("TranCode", "Frequency", "Success", "Duration", "Description", width=len_trancode))
+    print(
+        "{0:<{width}}{1:<12}{2:<12}{3:<18}{4:<20}".format("TranCode", "Frequency", "Success", "Duration", "Description",
+                                                          width=len_trancode))
     v_time_data_freq_order_zero = sorted([x for x in v_time_data_succ_order if x[5] == 0.0], key=lambda x: x[2],
                                          reverse=True)
     zero_count = 0
@@ -305,7 +390,8 @@ def main():
         if item[5] != 0.0: break
         zero_count += 1
         print("{0:<{width}}{1:<12.2f}{2:<12.2%}{3:<18.2f}{4:<20}".format(
-            '*'+item[0] if item[0] in apis else item[0], item[2]/argv_l, item[5], item[6], item[1], width=len_trancode))
+            '*' + item[0] if item[0] in apis else item[0], item[2] / argv_l, item[5], item[6], item[1],
+            width=len_trancode))
 
     # 把成功率为0的过滤掉, 剩下的再取成功率最低的前10和耗时最高的前十
     v_time_data_succ_order_nozero = list(filter(lambda x: x[5] != 0, v_time_data_succ_order))
@@ -314,19 +400,25 @@ def main():
 
     print("***********************************************")
     print('2. 均成功率最低的{}个接口为: '.format(max_index))
-    print("{0:<{width}}{1:<12}{2:<12}{3:<18}{4:<20}".format("TranCode", "Frequency", "Success", "Duration", "Description", width=len_trancode))
+    print(
+        "{0:<{width}}{1:<12}{2:<12}{3:<18}{4:<20}".format("TranCode", "Frequency", "Success", "Duration", "Description",
+                                                          width=len_trancode))
     for i in range(max_index):
         item = v_time_data_succ_order_nozero[i]
         print("{0:<{width}}{1:<12.2f}{2:<12.2%}{3:<18.2f}{4:<20}".format(
-            '*'+item[0] if item[0] in apis else item[0], item[2]/argv_l, item[5], item[6], item[1], width=len_trancode))
+            '*' + item[0] if item[0] in apis else item[0], item[2] / argv_l, item[5], item[6], item[1],
+            width=len_trancode))
 
     print("***********************************************")
     print('3. 平均耗时最高的{}个接口为: '.format(max_index))
-    print("{0:<{width}}{1:<12}{2:<12}{3:<18}{4:<20}".format("TranCode", "Frequency", "Success", "Duration", "Description", width=len_trancode))
+    print(
+        "{0:<{width}}{1:<12}{2:<12}{3:<18}{4:<20}".format("TranCode", "Frequency", "Success", "Duration", "Description",
+                                                          width=len_trancode))
     for i in range(max_index):
         item = v_time_data_dura_order_nozero[i]
         print("{0:<{width}}{1:<12.2f}{2:<12.2%}{3:<18.2f}{4:<20}".format(
-            '*'+item[0] if item[0] in apis else item[0], item[2]/argv_l, item[5], item[6], item[1],width=len_trancode))
+            '*' + item[0] if item[0] in apis else item[0], item[2] / argv_l, item[5], item[6], item[1],
+            width=len_trancode))
 
     """
     和基准比, 单独分析当前时点情况
@@ -341,6 +433,7 @@ def main():
         else:
             item1 = dict_time_data[k]
             item2 = dict_base_data[k]
+            # 5是成功率, 6是平均耗时
             if item2[2] < argv_l * min_freq_old or item2[6] == 0:  # base调用量为0的(6.12改成小于阈值), 成功率0的, 耗时0的不在当下考虑
                 dict_time_data.pop(k)
                 continue
@@ -378,20 +471,21 @@ def main():
         print("***********************************************")
         print('{}的{}个接口为: '.format(notes, max_index))
         print("{:<{width}}{:<12}{:<12}{:<18}{:<12}{:<12}{:<18}{:<12}{:<12}{:<18}".format(
-            "TranCode", "Frequency", "Base", "CHANGE", "Success", "Base", "CHANGE", "Duration", 'Base', 'CHANGE', width=len_trancode))
+            "TranCode", "Frequency", "Base", "CHANGE", "Success", "Base", "CHANGE", "Duration", 'Base', 'CHANGE',
+            width=len_trancode))
         for i in range(max_index):
             item = l[i]
             print("{:<{width}}{:<12.2f}{:<12.2f}{:<18.2%}{:<12.2f}{:<12.2f}{:<18.2%}{:<12.2f}{:<12.2f}{:<18.2%}".format(
-                '*'+item[0] if item[0] in apis else item[0], item[2]/argv_l, item[7]/argv_l, item[9], 100*item[5], 100*item[10],
-                item[12], item[6], item[13], item[15], width=len_trancode))
+                '*' + item[0] if item[0] in apis else item[0], item[2] / argv_l, item[7] / argv_l, item[9],
+                                                               100 * item[5], 100 * item[10],
+                item[11], item[6], item[13], item[15], width=len_trancode))
 
     # printf('4. 交易量变化(量差)最大', v_cmp_freq_abs)
-    printf('4. 交易量变化(比差)最大', v_cmp_freq_rel)
-    # printf('6. 成功率变化(量差)最大', v_cmp_succ_abs)
-    printf('5. 成功率变化(比差)最大', v_cmp_succ_rel)
+    printf('4. 交易量变化最大', v_cmp_freq_rel)
+    printf('5. 成功率变化最大', v_cmp_succ_abs)
+    # printf('5. 成功率变化(比差)最大', v_cmp_succ_rel)
     # printf('8. 平均耗时变化(量差)最大', v_cmp_dur_abs)
-    printf('6. 平均耗时变化(比差)最大', v_cmp_dur_rel)
-
+    printf('6. 平均耗时变化最大', v_cmp_dur_rel)
 
     # 由于对比列表里没打印中文描述, 不方便, 开一个线程去查
     class PrintDes(Thread):
@@ -401,19 +495,24 @@ def main():
         def run(self):
             spaces = "                                                "
             while True:
-                print("**********************************************************************************************************")
+                print(
+                    "**********************************************************************************************************")
                 trancode = input("输入接口编号查询接口中文描述, 输入q退出: ").upper().strip()
                 if trancode == 'Q':
                     exit(0)
                 else:
                     finded = False
-                    for key in dict_time_data:
+                    for key in dict_time_data_back:
                         if key.upper() == trancode:
                             finded = True
-                            print(spaces + dict_time_data[key][1])
-                    if not finded:
-                        print(spaces+"未查询到输入的接口编号, 请重新输入!")
+                            print(spaces + "接口描述: " + dict_time_data_back[key][1])
+                    for key, value in h5_api_all.items():
+                        if trancode in value['api']:
+                            finded = True
+                            print(spaces + "调用页面: " + key + ": " + value['des'])
 
+                    if not finded:
+                        print(spaces + "未查询到接口相关信息, 请检查输入!")
 
     thread = PrintDes()
     thread.setDaemon(False)

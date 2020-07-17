@@ -40,6 +40,11 @@ def main():
     image_bomb = pg.image.load("image/bomb.png").convert_alpha()
     rect_bomb = image_bomb.get_rect()
 
+
+    image_life = pg.image.load("image/life.png").convert_alpha()
+    rect_life = image_life.get_rect()
+
+
     rect_pause_resume = image_pause1.get_rect()
 
     pg.mixer_music.load("sound/game_music.ogg")
@@ -274,6 +279,11 @@ def main():
 
             screen.blit(player.image, player.rect)
 
+            for i in range(rt.num_player):
+                rect_life.bottom = HEIGHT - 10
+                rect_life.right = WIDTH - 10 - i * rect_life.width
+                screen.blit(image_life, rect_life)
+
             # 这里除了每隔一定帧去发射子弹, 也可以通过设置set_timer
             # 每隔一段时间给一个该发射子弹的信号
             # 先判断当前是否处于双倍时间
@@ -307,6 +317,7 @@ def main():
                 # 但是这么写有个坏处, 画图, 移动, 碰撞检测等地方都得来好几遍代码
                 # 要么就设立个active参数, 发射的时候无脑取最前面俩, 不管是不是碰撞了
                 # 然后pop, append虽然少了index逻辑判断, 但性能应该不如那个好
+                # 可以给子弹一个位置参数, left, right
                 if rt.group_bullet_active == group_bullet2_active:
                     if rt.group_bullet_notactive:
                         bullet = rt.group_bullet_notactive.pop()
@@ -326,7 +337,6 @@ def main():
             if rt.bullet_double:
                 if pg.time.get_ticks()-rt.tick_base >= rt.bullet_double:
                     rt.bullet_double = TIME_DOUBLE_BULLET
-            print(len(rt.group_bullet_active))
             # 处理补给
             if supply_bomb.active:
                 screen.blit(supply_bomb.image, supply_bomb.rect)
@@ -384,16 +394,18 @@ def main():
             screen.blit(text_score, (10, 5))
 
             # 再处理飞机碰撞
-            collides = pg.sprite.spritecollide(player, group_enemy_all, False, pg.sprite.collide_mask)
-            if collides:
-                # 这里要判断, 非破坏状态下才能再次赋值破坏状态
-                # 因为破坏状态下是不检测碰撞的
-                # 如果不判断, 那每次都赋值False, 而active又用的property, 每次都从第一张破坏图开始, 就死那了
-                if player.active:
-                    player.active = False
+            if not player.invincible:
+                collides = pg.sprite.spritecollide(player, group_enemy_all, False,
+                                                   pg.sprite.collide_mask)
+                if collides:
+                    # 这里要判断, 非破坏状态下才能再次赋值破坏状态
+                    # 因为破坏状态下是不检测碰撞的
+                    # 如果不判断, 那每次都赋值False, 而active又用的property, 每次都从第一张破坏图开始, 就死那了
+                    if player.active:
+                        player.active = False
 
-                for item in collides:
-                    if item.active: item.active = False
+                    for item in collides:
+                        if item.active: item.active = False
 
             player.update()
             for each in rt.group_bullet_active: each.update()
@@ -451,10 +463,14 @@ def main():
                     if rt.num_player > 1:
                         player.reset()
                         rt.num_player -= 1
+                        player.invincible = True
+                        pg.time.set_timer(TIMER_INVINCIBLE, 3*1000)
                     else:
                         stage = TERMINATE
                         initialize(stage, PLAY)
                         break
+                if e.type == TIMER_INVINCIBLE:
+                    player.invincible = False
 
         elif stage == PAUSE:
             # 暂停状态所有要素都画, 只不过不更新
@@ -474,6 +490,12 @@ def main():
             rect_bomb_text.y = HEIGHT-rect_bomb_text.height-5
             screen.blit(image_bomb, rect_bomb)
             screen.blit(text_bomb, rect_bomb_text)
+
+
+            for i in range(rt.num_player):
+                rect_life.bottom = HEIGHT - 10
+                rect_life.right = WIDTH - 10 - i * rect_life.width
+                screen.blit(image_life, rect_life)
 
             if supply_bomb.active:
                 screen.blit(supply_bomb.image, supply_bomb.rect)

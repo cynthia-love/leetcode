@@ -48,6 +48,8 @@ class Player(pg.sprite.Sprite):
         self.x = int((self.width_screen-self.width)/2)
         self.y = self.height_screen-self.height-60
 
+        self.invincible = False
+
     # 游戏重新开始时, 重置飞机状态
     # 除了用函数实现, 其实还可以在active的property里实现图片和位置重置
     def reset(self):
