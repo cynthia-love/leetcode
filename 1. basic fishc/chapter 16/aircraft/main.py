@@ -1,44 +1,11 @@
-# -*- coding: utf-8 -*-
-# Author: Cynthia
-
-"""
-    飞机大战
-    STAGE: LAUNCH->PLAY->PAUSE->TERMINATE, 分别设值0, 1, 2, 3
-    注意理解大项目的开发过程, 先搭主函数框架, 然后一个个元素往里加, 加的同时配合修改主函数
-"""
-import sys
-import random
-import traceback
-import pygame as pg
-from module.const import *
-from module.player import *
-from module.enemy import *
-from pygame.locals import *
-from module.bullet import *
-from module.supply import *
 
 
-def main():
-    # 先初始化全局部分
-    pg.init()
-    pg.display.set_caption(TITLE)
-    screen = pg.display.set_mode(SIZE)
-    screen_alpha = screen.convert_alpha()
-    font_score = pg.font.Font("font/font.TTF", 36)
-    font_bomb = pg.font.Font("font/font.TTF", 48)
+    font_over = pg.font.Font("font/font.TTF", 48)
 
-    # 然后是不同阶段可能用到的素材, 先载入不会变得
-    image_background = pg.image.load("image/background.png")
-    rect_background = image_background.get_rect()
-
-    image_pause1 = pg.image.load("image/pause_nor.png").convert_alpha()
-    image_pause2 = pg.image.load("image/pause_pressed.png").convert_alpha()
 
     image_resume1 = pg.image.load("image/resume_nor.png").convert_alpha()
     image_resume2 = pg.image.load("image/resume_pressed.png").convert_alpha()
 
-    image_bomb = pg.image.load("image/bomb.png").convert_alpha()
-    rect_bomb = image_bomb.get_rect()
 
 
     image_life = pg.image.load("image/life.png").convert_alpha()
@@ -46,6 +13,13 @@ def main():
 
 
     rect_pause_resume = image_pause1.get_rect()
+
+
+    image_again = pg.image.load("image/again.png").convert_alpha()
+    rect_again = image_again.get_rect()
+
+    image_over = pg.image.load("image/gameover.png").convert_alpha()
+    rect_over = image_over.get_rect()
 
     pg.mixer_music.load("sound/game_music.ogg")
     pg.mixer_music.set_volume(0.2)
@@ -65,19 +39,10 @@ def main():
     group_enemy_mid = pg.sprite.Group()
     group_enemy_big = pg.sprite.Group()
 
-    # 子弹有点像之前的灰, 绿小球, 不同的组具有不同的行为
-    # 给精灵加状态字段如声明多个group更易操作
-    # 发射时机, 碰撞检测, 碰到上沿这些逻辑不仅仅涉及子弹内部
-    # 所以这些逻辑放在主函数里做就好
-    # group_bullet1_notactive不渲染, 用set比用group更方便
-    group_bullet1_notactive = set()
-    # 激活状态的弹药和notactive弹药库不一样, 其需要知道弹药的发射顺序
-    # 所以这里不能直接用group
-    group_bullet1_active = list()
+    # 子弹是有顺序的, 所以不能用group
+    group_bullet1 = list()
 
-    group_bullet2_notactive = set()
-
-    group_bullet2_active = list()
+    group_bullet2 = list()
 
     supply_bomb = BombSupply(screen)
     supply_bullet = BulletSupply(screen)
@@ -105,12 +70,15 @@ def main():
     def add_bullet1(num):
         for i in range(num):
             bullet = Bullet1(player, SPEED_BULLET1)
-            group_bullet1_notactive.add(bullet)
+            group_bullet1.append(bullet)
 
     def add_bullet2(num):
         for i in range(num):
-            bullet = Bullet2(player, SPEED_BULLET2)
-            group_bullet2_notactive.add(bullet)
+            # 超级子弹需要指定是哪侧的
+            bullet = Bullet2(player, SPEED_BULLET2, 'left')
+            group_bullet2.append(bullet)
+            bullet = Bullet2(player, SPEED_BULLET2, 'right')
+            group_bullet2.append(bullet)
 
     # 各各级别并不是把所有敌机速度都加1, 可能只加小的或中的
     def increase_speed(target, inc):
@@ -126,6 +94,7 @@ def main():
         image_pause_resume = image_pause1
         index_frame = 0
         score = 0
+        best_score = 0
         level = 1
         num_bomb = NUM_BOMB
         # 设想一种情况, 吃到双倍子弹, 用了5秒, 暂停, 再回来, 应该还能继续用13秒
@@ -139,8 +108,7 @@ def main():
 
         num_player = 3
 
-        group_bullet_active = group_bullet1_active
-        group_bullet_notactive = group_bullet1_notactive
+        group_bullet = group_bullet1
 
     def initialize(stage_to, stage_from):
 
@@ -172,7 +140,10 @@ def main():
                 rt.score = 0
                 rt.level = 1
                 rt.num_bomb = NUM_BOMB
+                rt.bullet_double = 0
+                rt.tick_base = 0
                 rt.num_player = 3
+                rt.group_bullet = group_bullet1
 
             elif stage_from == PAUSE:
                 pg.mixer_music.unpause()
@@ -212,6 +183,36 @@ def main():
         else:
             pg.time.set_timer(TIMER_SUPPLY, 0)
             pg.mixer_music.stop()
+            pg.mixer.stop()
+            if os.path.isfile("record.txt"):
+                with open("record.txt", "r") as f:
+                    rt.best_score = int(f.read())
+            if rt.score > rt.best_score:
+                rt.best_score = rt.score
+                with open("record.txt", "w") as f:
+                    f.write(str(rt.score))
+            rt.text_best_score = font_score.render("Best: {}".format(rt.best_score), True, WHITE)
+            rt.rect_best_score = rt.text_best_score.get_rect()
+            rt.rect_best_score.topleft = (20, 20)
+
+            rt.text_yourscore = font_over.render("Your Score", True, WHITE)
+            rt.rect_yourscore = rt.text_yourscore.get_rect()
+            rt.rect_yourscore.midtop = screen.get_rect().midtop
+            rt.rect_yourscore.top+=HEIGHT//3
+
+            rt.text_score = font_over.render(str(rt.score), True, WHITE)
+            rt.rect_score = rt.text_score.get_rect()
+            rt.rect_score.midtop = screen.get_rect().midtop
+            rt.rect_score.top += rt.rect_yourscore.bottom+10
+
+            rect_again.midtop = rt.rect_score.midbottom
+            rect_again.top += 20
+
+            rect_over.midtop = rect_again.midbottom
+            rect_over.top += 10
+
+
+
 
     stage = PLAY
     initialize(stage, LAUNCH)
@@ -230,7 +231,6 @@ def main():
                 sys.exit()
 
         if stage == PLAY:
-
             # 响应用户键盘操作有两种方法, 一是通过KEYDOWN和KEYUP事件
             # 另一种是调用key模块的get_pressed()方法
             # 第一种仅适用于偶尔触发的键盘事件, 所以这里用第二种
@@ -266,16 +266,7 @@ def main():
                     else:
                         supply_bullet.release()
 
-            screen.blit(image_background, rect_background)
-            screen.blit(rt.image_pause_resume, rect_pause_resume)
 
-            # 下角画炸弹
-            text_bomb = font_bomb.render("x {}".format(rt.num_bomb), True, WHITE)
-            rect_bomb_text = text_bomb.get_rect()
-            rect_bomb_text.x = rect_bomb.right+10
-            rect_bomb_text.y = HEIGHT-rect_bomb_text.height-5
-            screen.blit(image_bomb, rect_bomb)
-            screen.blit(text_bomb, rect_bomb_text)
 
             screen.blit(player.image, player.rect)
 
@@ -286,57 +277,35 @@ def main():
 
             # 这里除了每隔一定帧去发射子弹, 也可以通过设置set_timer
             # 每隔一段时间给一个该发射子弹的信号
-            # 先判断当前是否处于双倍时间
-
-
-            if rt.bullet_double:
-                rt.group_bullet_active = group_bullet2_active
-                rt.group_bullet_notactive = group_bullet2_notactive
-            else:
-                rt.group_bullet_active = group_bullet1_active
-                rt.group_bullet_notactive = group_bullet1_notactive
-
             if rt.index_frame % FRAME_BULLET == 0:
-                if rt.group_bullet_notactive:
-                    bullet = rt.group_bullet_notactive.pop()
-                    rt.group_bullet_active.append(bullet)
-                # 如果弹药库里没有呢, 那得把最先发射那个强制回收回来
-                # 这就是为什么group_bullet1_active得设置成有顺序的list
+                # 非双倍时间
+                if not rt.bullet_double:
+                    bullet = rt.group_bullet.pop(0)
+                    rt.group_bullet.append(bullet)
+                    bullet.fire()
                 else:
-                    item = rt.group_bullet_active.pop(0)
-                    item.reset()
-                    rt.group_bullet_active.append(item)
-
-                # 2号子弹的弹药默认是左翼发射的
-                # 如果判断是2号, 右翼还得发射一发
-                # 不行, 不能这么写, 如果一边一直碰撞, 那一直从弹药库里取
-                # 另一边弹药就会超过1/2*NUM_BULLET2
-                # 而子弹射程应该是固定的
-                # 建议独立俩弹道出来
-                # 用三个, fire_left, fire_middle, fire_right
-                # 但是这么写有个坏处, 画图, 移动, 碰撞检测等地方都得来好几遍代码
-                # 要么就设立个active参数, 发射的时候无脑取最前面俩, 不管是不是碰撞了
-                # 然后pop, append虽然少了index逻辑判断, 但性能应该不如那个好
-                # 可以给子弹一个位置参数, left, right
-                if rt.group_bullet_active == group_bullet2_active:
-                    if rt.group_bullet_notactive:
-                        bullet = rt.group_bullet_notactive.pop()
-                        bullet.reset(side='right')
-                        rt.group_bullet_active.append(bullet)
-                    else:
-                        item = rt.group_bullet_active.pop(0)
-                        item.reset(side='right')
-                        rt.group_bullet_active.append(item)
+                    # 双倍子弹, 一次回收俩, 不管其状态
+                    bullet = rt.group_bullet.pop(0)
+                    rt.group_bullet.append(bullet)
+                    bullet.fire()
+                    bullet = rt.group_bullet.pop(0)
+                    rt.group_bullet.append(bullet)
+                    bullet.fire()
 
             rt.index_frame += 1
             # 子弹只能这么画, 没办法用group统一处理
-            for each in rt.group_bullet_active: screen.blit(each.image, each.rect)
+            for each in rt.group_bullet:
+                if each.active: screen.blit(each.image, each.rect)
 
             group_enemy_all.draw(screen)
 
             if rt.bullet_double:
                 if pg.time.get_ticks()-rt.tick_base >= rt.bullet_double:
-                    rt.bullet_double = TIME_DOUBLE_BULLET
+                    rt.bullet_double = 0
+                    for each in group_bullet1:
+                        each.active = False
+                    rt.group_bullet = group_bullet1
+
             # 处理补给
             if supply_bomb.active:
                 screen.blit(supply_bomb.image, supply_bomb.rect)
@@ -351,19 +320,27 @@ def main():
                 screen.blit(supply_bullet.image, supply_bullet.rect)
                 if pg.sprite.collide_mask(player, supply_bullet):
                     sound_bullet_get.play()
+
                     rt.bullet_double = TIME_DOUBLE_BULLET
                     rt.tick_base = pg.time.get_ticks()
+
+                    for each in group_bullet2:
+                        each.active = False
+                    rt.group_bullet = group_bullet2
+
                     supply_bullet.active = False
                 else:
                     supply_bullet.move()
-            # 先处理子弹碰撞
-            for each in rt.group_bullet_active:
-                # 每一颗子弹去判断是否和敌机有碰撞, 以及是否y小于0
+
+            # 处理子弹碰撞
+            for each in rt.group_bullet:
+                # 注意状态不对的子弹不要去判断碰撞
+                if not each.active: continue
+                # 每一颗正常状态的子弹去判断是否和敌机有碰撞, 以及是否y小于0
                 collides = pg.sprite.spritecollide(each, group_enemy_all, False, pg.sprite.collide_mask)
                 if each.y < 0 or collides:
-                    rt.group_bullet_active.remove(each)
-                    each.reset()  # 重新进入弹药库, 注意不能无限制地生成新的子弹, 内存会慢慢受不了的
-                    rt.group_bullet_notactive.add(each)
+                    each.active = False  # 重新进入弹药库, 注意不能无限制地生成新的子弹, 内存会慢慢受不了的
+
                 for enemy in collides:
                     if enemy.active:
                         enemy.energy -= 1
@@ -389,9 +366,6 @@ def main():
             for each in group_enemy_mid: each.showHealth()
             for each in group_enemy_big: each.showHealth()
 
-            # 画分数
-            text_score = font_score.render("Score: {}".format(rt.score), True, WHITE)
-            screen.blit(text_score, (10, 5))
 
             # 再处理飞机碰撞
             if not player.invincible:
@@ -401,6 +375,8 @@ def main():
                     # 这里要判断, 非破坏状态下才能再次赋值破坏状态
                     # 因为破坏状态下是不检测碰撞的
                     # 如果不判断, 那每次都赋值False, 而active又用的property, 每次都从第一张破坏图开始, 就死那了
+                    # 这里之所以要判断active为True的时候才改False而不是无脑改False
+                    # 因为播放毁灭生效是放在player和enemy类里写了
                     if player.active:
                         player.active = False
 
@@ -408,7 +384,7 @@ def main():
                         if item.active: item.active = False
 
             player.update()
-            for each in rt.group_bullet_active: each.update()
+            for each in rt.group_bullet: each.move()
 
             # 在敌机下一次移动之前, 根据分数判断是否升级
             if rt.level == 1 and rt.score >= 50000:
@@ -447,18 +423,7 @@ def main():
 
             # 暂停按钮为什么要放后面, 因为改了状态后不希望继续执行下面的代码了
             for e in event:
-                if e.type == MOUSEMOTION and rect_pause_resume.collidepoint(e.pos):
-                    rt.image_pause_resume = image_pause2
-                else:
-                    rt.image_pause_resume = image_pause1
-
-                if e.type == MOUSEBUTTONDOWN and e.button == 1:
-                    if rect_pause_resume.collidepoint(e.pos):
-                        stage = PAUSE
-                        initialize(stage, PLAY)
-                        # 注意这里的break, 一旦点了暂停, 那要立即改变游戏的阶段
-                        # 不能再往下遍历其他事件, 否则可能把图片改回去
-                        break
+                
                 if e.type == EVENT_PLAYER_DESTROYED:
                     if rt.num_player > 1:
                         player.reset()
@@ -476,7 +441,8 @@ def main():
             # 暂停状态所有要素都画, 只不过不更新
             screen.blit(image_background, (0, 0))
             screen.blit(player.image, player.rect)
-            for each in rt.group_bullet_active: screen.blit(each.image, each.rect)
+            for each in rt.group_bullet:
+                if each.active: screen.blit(each.image, each.rect)
             group_enemy_all.draw(screen)
             for each in group_enemy_mid: each.showHealth()
             for each in group_enemy_big: each.showHealth()
@@ -500,6 +466,9 @@ def main():
             if supply_bomb.active:
                 screen.blit(supply_bomb.image, supply_bomb.rect)
 
+            if supply_bullet.active:
+                screen.blit(supply_bullet.image, supply_bullet.rect)
+
             screen_alpha.fill(WHITE_TRANSPARENT)
             screen_alpha.blit(rt.image_pause_resume, rect_pause_resume)
             screen.blit(screen_alpha, (0, 0))
@@ -518,19 +487,21 @@ def main():
 
         else:
             screen.blit(image_background, (0, 0))
+            screen.blit(rt.text_best_score, rt.rect_best_score)
+            screen.blit(rt.text_yourscore, rt.rect_yourscore)
+            screen.blit(rt.text_score, rt.rect_score)
+            screen.blit(image_again, rect_again)
+            screen.blit(image_over, rect_over)
+
+            for e in event:
+                if e.type == MOUSEBUTTONDOWN and e.button == 1:
+                    if rect_again.collidepoint(e.pos):
+                        main()
+                        break
+                    if rect_over.collidepoint(e.pos):
+                        pg.quit()
+                        sys.exit()
 
         pg.display.flip()
         clock.tick(FRAME)
 
-if __name__ == '__main__':
-    try:
-        main()
-        print("正常退出")
-    except SystemExit as e:
-        # 注意, sys.exit()调的时候传了参数这里才有code, 不然会输出None
-        # 甚至更进一步, sys.exit()不光可以传数字, 还可以传任意字符串...
-        # 那些所谓的0表示正常退出, 其他数字表示不正常是纯主观规定的
-        print("调sys.exit()退出", e.code)
-    except:
-        pg.quit()
-        traceback.print_exc()

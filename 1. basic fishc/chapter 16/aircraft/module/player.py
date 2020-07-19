@@ -72,6 +72,7 @@ class Player(pg.sprite.Sprite):
                     self.image = self.image_destroy[index + 1]
                 else:
                     # 第二个参数比如KEYDOWN里的key, 不过貌似不指定也不报错
+                    print("发出destroyevent")
                     pg.event.post(pg.event.Event(EVENT_PLAYER_DESTROYED, dict={"some_attr": 1}))
 
             self.tick = tick
