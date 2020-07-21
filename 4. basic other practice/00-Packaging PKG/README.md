@@ -8,7 +8,7 @@ Markdown是一种可以使用普通文本编辑器编写的标记语言，通过
 1. conda install setuptools
 2. conda install wheel
 3. conda install twine
-4. 新建twine配置文件.pypirc
+4. $HOME下新建twine配置文件.pypirc
 
 ``` html
 [distutils]
@@ -24,7 +24,7 @@ password: PyPI密码
 3. twine upload dist/*
 4. 指定版本: twine upload dist/\*1.0.5\*
 
-## 使用说明
+## 之后用pip安装, 就可以使用了
 ```
 import hellopy.hello as hh
 import hellopy.opts.const as hoc
