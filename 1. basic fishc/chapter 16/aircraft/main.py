@@ -1,115 +1,5 @@
 
 
-    font_over = pg.font.Font("font/font.TTF", 48)
-
-
-    image_resume1 = pg.image.load("image/resume_nor.png").convert_alpha()
-    image_resume2 = pg.image.load("image/resume_pressed.png").convert_alpha()
-
-
-
-    image_life = pg.image.load("image/life.png").convert_alpha()
-    rect_life = image_life.get_rect()
-
-
-    rect_pause_resume = image_pause1.get_rect()
-
-
-    image_again = pg.image.load("image/again.png").convert_alpha()
-    rect_again = image_again.get_rect()
-
-    image_over = pg.image.load("image/gameover.png").convert_alpha()
-    rect_over = image_over.get_rect()
-
-    pg.mixer_music.load("sound/game_music.ogg")
-    pg.mixer_music.set_volume(0.2)
-
-    sound_upgrade = pg.mixer.Sound("sound/upgrade.wav")
-    sound_bomb_use = pg.mixer.Sound("sound/use_bomb.wav")
-    sound_bomb_get = pg.mixer.Sound("sound/get_bomb.wav")
-    sound_supply = pg.mixer.Sound("sound/supply.wav")
-    sound_bullet_get = pg.mixer.Sound("sound/get_bullet.wav")
-
-    # 再处理会变的东西
-    player = Player(screen, SPEED_PLAYER, FRAME_SPRITE)
-
-    # 设置all的目的是便于同一进行碰撞检测等, 不然得来三遍
-    group_enemy_all = pg.sprite.Group()
-    group_enemy_small = pg.sprite.Group()
-    group_enemy_mid = pg.sprite.Group()
-    group_enemy_big = pg.sprite.Group()
-
-    # 子弹是有顺序的, 所以不能用group
-    group_bullet1 = list()
-
-    group_bullet2 = list()
-
-    supply_bomb = BombSupply(screen)
-    supply_bullet = BulletSupply(screen)
-
-
-    def add_small_enemy(num):
-        for i in range(num):
-            enemy = SmallEnemy(screen, SPEED_ENEMY_SMALL, HEALTH_ENEMY_SMALL)
-            group_enemy_small.add(enemy)
-            group_enemy_all.add(enemy)
-
-    def add_mid_enemy(num):
-        for i in range(num):
-            enemy = MidEnemy(screen, SPEED_ENEMY_MID, HEALTH_ENEMY_MID)
-            group_enemy_mid.add(enemy)
-            group_enemy_all.add(enemy)
-
-
-    def add_big_enemy(num):
-        for i in range(num):
-            enemy = BigEnemy(screen, SPEED_ENEMY_BIG, HEALTH_ENEMY_BIG, FRAME_SPRITE)
-            group_enemy_big.add(enemy)
-            group_enemy_all.add(enemy)
-
-    def add_bullet1(num):
-        for i in range(num):
-            bullet = Bullet1(player, SPEED_BULLET1)
-            group_bullet1.append(bullet)
-
-    def add_bullet2(num):
-        for i in range(num):
-            # 超级子弹需要指定是哪侧的
-            bullet = Bullet2(player, SPEED_BULLET2, 'left')
-            group_bullet2.append(bullet)
-            bullet = Bullet2(player, SPEED_BULLET2, 'right')
-            group_bullet2.append(bullet)
-
-    # 各各级别并不是把所有敌机速度都加1, 可能只加小的或中的
-    def increase_speed(target, inc):
-        for each in target:
-            each.speed += inc
-
-    # 定义各阶段的初始化函数 LAUNCH, PLAY, PAUSE, TERMINATE
-    # 由于初始化函数还要初始化一些基本类型变量, 这些变量记得用nonlocal
-    # 或者用一个字典或者类存这些变量
-
-
-    class rt:
-        image_pause_resume = image_pause1
-        index_frame = 0
-        score = 0
-        best_score = 0
-        level = 1
-        num_bomb = NUM_BOMB
-        # 设想一种情况, 吃到双倍子弹, 用了5秒, 暂停, 再回来, 应该还能继续用13秒
-        # 用set_timer实现不了这个效果, 不如找个字段直接存当前双倍剩余时间以及基准时间
-        # 吃到新的子弹补给更新剩余时长和基准时间
-        # 每一帧判断, 如果当前tick-tick_base超过了剩余时间, 那么剩余时间置为0
-        # 如果点了暂停, 判断还有没有剩余时间, 如果有, 存下来还剩多少
-        # 由暂停再回来的时候, 更新基准时间
-        bullet_double = 0
-        tick_base = 0
-
-        num_player = 3
-
-        group_bullet = group_bullet1
-
     def initialize(stage_to, stage_from):
 
 
@@ -486,12 +376,7 @@
                         break
 
         else:
-            screen.blit(image_background, (0, 0))
-            screen.blit(rt.text_best_score, rt.rect_best_score)
-            screen.blit(rt.text_yourscore, rt.rect_yourscore)
-            screen.blit(rt.text_score, rt.rect_score)
-            screen.blit(image_again, rect_again)
-            screen.blit(image_over, rect_over)
+
 
             for e in event:
                 if e.type == MOUSEBUTTONDOWN and e.button == 1:
