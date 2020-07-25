@@ -4,9 +4,11 @@
 """
 
 """
+import re
 import os
 import sys
 import copy
+from numpy import mean, std, median, argpartition
 from os import system
 from threading import Thread
 from base64 import b64encode
@@ -47,6 +49,7 @@ def main():
     print("-i 条数, 分析交易量排名前x的接口, 可与-s同步生效; -sys mobs/ecbpin/ecbpout, 指定分析系统, 默认mobs")
     print("-verbose 此参数可以给接口增加更多调用信息, 要保证当前目录有h5_api_all.xlsx, 不能改名, 没有请先执行scan")
     print("如果同时指定-s -e -i -f, 则先提取指定接口, 再去掉要排除的, 再从中选取前x, 再把x个进行低频过滤得到要分析接口")
+    print("部分接口波动大, 7.24新增-cd, -td, 用于指定比较日(非当日), 基准日, 以天为单位去比较, 此时-c, -t, -l失效")
     print("**********************************************************************************************************")
 
     login_name, login_password, now = None, None, datetime.now()
@@ -66,6 +69,9 @@ def main():
     h5_api_all = defaultdict(dict)
 
     system_process = 'MOBS'
+
+    var_day = None
+    var_day_base = None
 
     for i in range(len(argv)):
         if argv[i] == '-l' and argv[i + 1:]:
@@ -141,12 +147,8 @@ def main():
         elif argv[i] == '-better':
             isbetter = True
         elif argv[i] == '-sys' and argv[i + 1:]:
-            id = argv[i + 1].upper()
-            if id in ['MOBS', 'ECBPIN', 'ECBPOUT']:
-                system_process = id
-            else:
-                print("无效的系统编号！")
-                return
+            system_process = argv[i + 1].upper()
+
         elif argv[i] == '-i' and argv[i + 1:]:
             s = argv[i + 1]
             if match(r"[0-9]+", s):
@@ -162,7 +164,22 @@ def main():
             else:
                 print("未检测到h5_api_all.xlsx, 无法开启-verbose")
                 return
+        elif argv[i] == '-cd' and argv[i + 1:]:
+            s = argv[i + 1]
 
+            if match(r"\d{4}-\d{2}-\d{2}", s):
+                var_day = s
+            else:
+                print("无效的待比较日期！")
+                return
+        elif argv[i] == '-td' and argv[i + 1:]:
+            s = argv[i + 1]
+
+            if match(r"\d{4}-\d{2}-\d{2}", s):
+                var_day_base = s
+            else:
+                print("无效的基准日期！")
+                return
 
     print("分析系统: ", system_process)
     # 先计算四个时间点, 得到当前时间段, 基准时间段
@@ -172,6 +189,16 @@ def main():
 
     time_start, time_end = t2s(time_start), t2s(time_end)
     base_start, base_end = t2s(base_start), t2s(base_end)
+
+
+    if var_day:
+        time_start = time_end = var_day
+        var_day = datetime.strptime(var_day, "%Y-%m-%d")-timedelta(weeks=1)
+        base_start = base_end = var_day.strftime("%Y-%m-%d")
+        argv_l = 24*60
+
+    if var_day_base:
+        base_start = base_end = var_day_base
 
     # 读取接口扫描文档
     if isverbose:
@@ -257,7 +284,7 @@ def main():
     userAuthSession = login(login_name, login_password, base_url)
 
     # 查询, 经测验，1个小时勉强顶得住，再长服务器就返回错误了
-    def pull(login_name, userAuthSession, base_url, time_start, time_end, dim) -> list:
+    def pull(login_name, userAuthSession, base_url, time_start, time_end, dim, secondDimensionsNo="") -> list:
         pull_url = base_url + "/imms/qryDimStatisInfo.do"
         # 注意这里params是区分类型的，下面的4如果设置为字符型就查不回来数据
         params = {
@@ -272,18 +299,17 @@ def main():
                 "endTime": time_end,
                 "firstDimensionsNo": dim,
                 "systemId": system_process,
-                "timeType": 4,
+                "timeType": 4 if not var_day else 2,
                 "type": "MX",
+                "secondDimensionsNo": secondDimensionsNo
 
             }
         }
         try:
             dimStatisInfoVoList = json_loads(session.post(pull_url, json_dumps(params)).text)['RSP_BODY'][
                 'dimStatisInfoVoList']
-            if not dimStatisInfoVoList:
-                raise Exception("dimStatisInfoVoList empty")
-            else:
-                return dimStatisInfoVoList
+            return dimStatisInfoVoList
+
         except:
             print("拉取失败！可能服务器不稳定或时间设置有误，请再次尝试！")
             exit(1)
@@ -292,6 +318,10 @@ def main():
     # time_host = pull(login_name, userAuthSession, base_url, time_start, time_end, "ip")
     time_data = pull(login_name, userAuthSession, base_url, time_start, time_end, "transCode")
     base_data = pull(login_name, userAuthSession, base_url, base_start, base_end, "transCode")
+
+    if not time_data or not base_data:
+        print("拉取失败！可能服务器不稳定或时间设置有误，请再次尝试！")
+        exit(1)
     print("数据拉取成功...")
 
     # 按secondDimensionsNo将时间段内的数值加总
@@ -301,12 +331,12 @@ def main():
             if item['secondDimensionsNo'] not in dict_res:
                 dict_res[item['secondDimensionsNo']].extend([
                     item['secondDimensionsNo'], item['configDesc'], int(item['tradeCount']),
-                    int(item['successTradeCount']), int(item['countTime'])
+                    int(item['successTradeCount']), int(float(item['countTime']))
                 ])
             else:
                 dict_res[item['secondDimensionsNo']][2] += int(item['tradeCount'])
                 dict_res[item['secondDimensionsNo']][3] += int(item['successTradeCount'])
-                dict_res[item['secondDimensionsNo']][4] += int(item['countTime'])
+                dict_res[item['secondDimensionsNo']][4] += int(float(item['countTime']))
         for key in dict_res.keys():
             dict_res[key].extend([dict_res[key][3] / dict_res[key][2], dict_res[key][4] / dict_res[key][2]])
         return dict_res
@@ -571,17 +601,97 @@ def main():
                     continue
                 else:
                     finded = False
+                    api_freq, api_surate, api_dura = None, None, None
                     for key in dict_time_data_back:
                         if key.upper() == trancode:
                             finded = True
+                            api_freq = dict_time_data_back[key][2]/argv_l
+                            api_surate = dict_time_data_back[key][5]
+                            api_dura = dict_time_data_back[key][6]
                             print(spaces + "接口描述: " + dict_time_data_back[key][1])
+                            print("")
+
+
+                    # 去查询基准日整体均值和波动率, 并给出参考均值
+                    # time_data = pull(login_name, userAuthSession, base_url, time_start, time_end, "transCode")
+                    api_day_start = datetime.strptime(base_start[:10], "%Y-%m-%d")
+                    api_day_end = api_day_start+timedelta(minutes=59)
+                    # print("拉取接口基准日全部数据以计算统计量...")
+                    list_freq = []
+                    list_surate = []
+                    list_dura = []
+                    for i in range(24):
+                        tmp_start = api_day_start.strftime("%Y-%m-%d %H:%M")
+                        tmp_end = api_day_end.strftime("%Y-%m-%d %H:%M")
+                        try:
+                            tmp_api = pull(login_name, userAuthSession, base_url, tmp_start, tmp_end, "transCode", trancode)
+                            list_freq.extend([float(x['tradeCount']) for x in tmp_api])
+                            list_surate.extend([float(x['successRate'])/100 for x in tmp_api])
+                            list_dura.extend([float(x['avgTime']) for x in tmp_api])
+                        except:
+                            pass
+
+                        api_day_start = api_day_end+timedelta(minutes=1)
+                        api_day_end = api_day_start + timedelta(minutes=59)
+                    if len(list_freq) >= 30:  # 如果一天还调不到30次, 就算了
+                        finded = True
+
+                        # 重构list_surate和list_dura, 加上权重
+                        list_surate_new = []
+                        list_dura_new = []
+                        for i in range(len(list_freq)):
+                            list_surate_new.extend(list_surate[i:i+1]*int(list_freq[i]))
+                            list_dura_new.extend(list_dura[i:i+1]*int(list_freq[i]))
+
+                        # 成功率和耗时用老的算还是用扩展之后的算, 这是个问题
+                        # 均值用新的吧, 不然100*100, 1*10000这种求出来均值有问题
+                        # 标准差用老的吧, 100*100已经平滑了, 再扩展成100个就没变化了
+                        fm, fd, fn = mean(list_freq), std(list_freq, ddof=1), len(list_freq)
+                        sm, sd, sn = mean(list_surate_new), std(list_surate, ddof=1), len(list_surate)
+                        dm, dd, dn = mean(list_dura_new), std(list_dura, ddof=1), len(list_dura)
+
+                        # 频次的置信区间好像没什么用, 受时间点影响太大
+                        # print(spaces + "置信区间(99%-Frequency): {:.2f}~{:.2f}".format(fm-2.58*fd/fn**0.5, fm+2.58*fd/fn**0.5))
+
+                        f_mid = median(list_freq)
+                        f_worse_10 = mean(sorted(list_freq, reverse=True)[:int(len(list_freq)*0.1)])
+                        f_worse_20 = mean(sorted(list_freq, reverse=True)[:int(len(list_freq) * 0.2)])
+                        # print(spaces+"均交易量:")
+                        # print(spaces+"        "+"均值: {:.2f}\t\t中位数: {:.2f}".format(fm, f_mid))
+                        # print(spaces + "        " + "最差10%: {:.2f}\t\t最差20%: {:.2f}".format(f_worse_10, f_worse_20))
+                        # print(spaces+"        "+"置信区间(99%):\t\t{:.2f}~{:.2f}".format(fm-2.58*fd/fn**0.5, fm+2.58*fd/fn**0.5))
+
+                        # 中位数和最差10均值都不要用扩展之后的, 我们的目前主要是想知道基准时间段有没有个例
+                        s_mid = median(list_surate_new)
+                        s_worse_10 = mean(sorted(list_surate_new)[:int(len(list_surate_new)*0.1)])
+                        s_worse_20 = mean(sorted(list_surate_new)[:int(len(list_surate_new) * 0.2)])
+                        print(spaces+"均成功率({:.2%}):".format(api_surate if api_surate else ""))
+
+                        # 记住这里的双层format用法, 内层填值, 外层控制整体格式
+                        print(spaces+"        "+"{:<19}{}".format("日均值: {:.2%}".format(sm), "中位数: {:.2%}".format(s_mid)))
+                        print(spaces+"        "+"{:<20}{}".format("最低10%: {:.2%}".format(s_worse_10), "最低20%: {:.2%}".format(s_worse_20)))
+                        print(spaces+"        "+"{:<18}{}".format("置信区间(99%): ", "{:.2%}~{:.2%}".format(sm-2.58*sd/sn**0.5, sm+2.58*sd/sn**0.5)))
+
+                        print("")
+
+                        d_mid = median(list_dura_new)
+                        d_worse_10 = mean(sorted(list_dura_new, reverse=True)[:int(len(list_dura_new)*0.1)])
+                        d_worse_20 = mean(sorted(list_dura_new, reverse=True)[:int(len(list_dura_new) * 0.2)])
+                        print(spaces+"平均耗时({:.2f}):".format(api_dura if api_dura else ""))
+
+                        print(spaces+"        "+"{:<19}{}".format("日均值: {:.2f}".format(dm), "中位数: {:.2f}".format(d_mid)))
+                        print(spaces+"        "+"{:<20}{}".format("最高10%: {:.2f}".format(d_worse_10), "最高20%: {:.2f}".format(d_worse_20)))
+                        print(spaces+"        "+"{:<18}{}".format("置信区间(99%): ", "{:.2f}~{:.2f}".format(dm-2.58*dd/dn**0.5, dm+2.58*dd/dn**0.5)))
+
+                        print("")
+
                     for key, value in h5_api_all.items():
-                        if trancode in value['api']:
+                        if re.search(r"\b{}\b".format(trancode), value['api'], re.IGNORECASE):
                             finded = True
-                            print(spaces + "可能调用: " + key + ": " + value['des'])
+                            print(spaces + "涉及页面: " + key + ": " + value['des'])
 
                     if not finded:
-                        print(spaces + "未查询到接口相关信息, 请检查输入!")
+                        print(spaces + "未查询到接口任何信息, 请检查输入!")
 
     thread = PrintDes()
     thread.setDaemon(False)

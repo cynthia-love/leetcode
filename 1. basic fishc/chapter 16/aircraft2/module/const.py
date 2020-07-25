@@ -8,6 +8,8 @@ from pygame.locals import *
 """通用, 不局限于本程序"""
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
+RED = (255, 0, 0)
+GREEN = (0, 255, 0)
 WHITE_TRANSPARENT_HALF = (255, 255, 255, 150)
 WHITE_TRANSPARENT_COMPLETE = (255, 255, 255, 0)
 
@@ -17,7 +19,8 @@ SIZE = WIDTH, HEIGHT = 480, 700  # 要与背景图保持一致
 
 """游戏全局常量, 还没到游戏控制这一层"""
 FPS = 60  # 主循环每秒至多60次, 或者说每次循环运行+延时时间至少是1000/60 ms
-FPS_ANIMATION = 50  # 精灵动画的帧率, 算出来间隔tick至少为1000/30 ms
+FPS_ANIMATION = 60  # 精灵动画的帧率, 算出来间隔tick至少为1000/30 ms
+
 FRAME_BULLET = 5  # 子弹的发射是用帧索引控制的, 每10帧发射一次, 实际间隔时间结合主循环FPS才能算出来
 # 注意, 子弹最终的射程和子弹发射频次, 子弹速度, 子弹数量都有关系
 
@@ -34,9 +37,14 @@ NUM_BOMB = 3
 NUM_BULLET1 = 5
 NUM_BULLET2 = 5
 
+
+STATE_ENEMY_FLY = 1
+STATE_ENEMY_HIT = 2
+STATE_ENEMY_DESTROY = 3
+
 NUM_ENEMY_SMALL = 10
-NUM_ENEMY_MIDDLE = 3
-NUM_ENEMY_BIG = 1
+NUM_ENEMY_MIDDLE = 5
+NUM_ENEMY_BIG = 3
 NUM_INC_ENEMY_SMALL = 5
 NUM_INC_ENEMY_MIDDLE = 3
 NUM_INC_ENEMY_BIG = 1
@@ -52,7 +60,7 @@ SPEED_ENEMY_MIDDLE = 2
 SPEED_ENEMY_BIG = 1
 SPEED_INC_ENEMY = 1
 
-HEALTH_ENEMY_SMALL = 1
+HEALTH_ENEMY_SMALL = 8
 HEALTH_ENEMY_MIDDLE = 8
 HEALTH_ENEMY_BIG = 20
 
