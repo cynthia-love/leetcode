@@ -252,7 +252,7 @@ def main():
                 sys.exit()
 
         if stage == PLAY:
-            print(clock.get_fps())
+            # print(clock.get_fps())
             # 1. 先画背景图
             screen.blit(r.s1_img_bg, r.s1_rect_bg)
 
@@ -335,8 +335,8 @@ def main():
                                     s1_score += SCORE_MIDDLE
                                 if item in r.s1_group_enemy_big:
                                     s1_score += SCORE_BIG
-                        #else:
-                        #   item.state = STATE_ENEMY_FLY
+                        else:
+                           item.state = STATE_ENEMY_FLY
 
 
             # 补给敌机碰撞(即使用炸弹)

@@ -121,11 +121,20 @@ class EnemyMiddle(pg.sprite.Sprite):
 
     # 表面上看到的敌机是无限的, 其实是有限的
     def reset(self):
+        # 搞一堆property, 省一堆参数, 真不如多写几行, 虽然容易漏改变量, 但至少逻辑简单了
         self.state = STATE_ENEMY_FLY
+        self.image = self.image_fly
+        self.health = HEALTH_ENEMY_MIDDLE
         self.rect.right = random.randint(self.rect.width, WIDTH)
         self.rect.bottom = random.randint(-10 * HEIGHT, -1 * HEIGHT)
 
     def update(self):
+        if pg.event.peek(EVENT_ENEMY_HIT_EXPIRATION):
+            pg.time.set_timer(EVENT_ENEMY_HIT_EXPIRATION, 0)
+            if self.state == STATE_ENEMY_FLY and self.image == self.image_hit:
+                self.image = self.image_fly
+
+
         if self.state in [STATE_ENEMY_FLY, STATE_ENEMY_HIT]:
             self.rect.top += self.speed
             if self.rect.top >= HEIGHT:
@@ -169,7 +178,9 @@ class EnemyMiddle(pg.sprite.Sprite):
         elif self._state == STATE_ENEMY_HIT and value == STATE_ENEMY_FLY:
             # 如果只用state变量有个小问题, 状态改变是实时的, 比如某一帧碰撞
             # 了, 显示hit图片, 下一帧没碰, 不希望变那么快, 不然肉眼分辨不出来
-            self.image = self.image_fly
+            # self.image = self.image_fly
+            pg.time.set_timer(EVENT_ENEMY_HIT_EXPIRATION, 100)
+            # 这里不改, 在update里判断, 如果100ms后, 状态是FLY且图片是hit, 改成FLY的
 
         self._state = value
 
@@ -225,10 +236,25 @@ class EnemyBig(pg.sprite.Sprite):
     # 表面上看到的敌机是无限的, 其实是有限的
     def reset(self):
         self.state = STATE_ENEMY_FLY
+        self.image = self.image_fly[0]
+        self.health = HEALTH_ENEMY_BIG
         self.rect.right = random.randint(self.rect.width, WIDTH)
         self.rect.bottom = random.randint(-15 * HEIGHT, -5 * HEIGHT)
 
     def update(self):
+        # 大飞机的image_fly有俩, 不能跟中飞机一样
+        # 中飞机hit一下, state变hit, image变hit, state变fly
+        # 100ms以后, update里接到hit事件, 去改image
+        # 问题是没接到这个事件之前呢, 中飞机无所谓, state为fly也可以渲染hit图片
+        # 但是大飞机有fly图片切换逻辑, 这时候fly图片list里定位不到当前图片, 就抛错了
+        # 底下加上一句if self.image == self.image_hit: return
+        # 感觉本来想省一个self.hit, 直接用self.state包含各种情况
+        # 结果省了之后逻辑更乱了....还得处理各种特殊情况, 还不如多变量, 切状态的时候多赋几个值而已
+        if pg.event.peek(EVENT_ENEMY_HIT_EXPIRATION):
+            pg.time.set_timer(EVENT_ENEMY_HIT_EXPIRATION, 0)
+            if self.state == STATE_ENEMY_FLY and self.image == self.image_hit:
+                self.image = self.image_fly[0]
+
         if self.state == STATE_ENEMY_FLY:
             if self.rect.bottom <= -50 <= self.rect.bottom + self.speed:
                 self.sound_close.play()
@@ -239,6 +265,7 @@ class EnemyBig(pg.sprite.Sprite):
 
             tick = pg.time.get_ticks()
             if tick-self.tick >= self.delay:
+                if self.image == self.image_hit: return
                 index = self.image_fly.index(self.image)
                 self.image = self.image_fly[(index+1)%len(self.image_fly)]
                 self.tick = tick
@@ -285,7 +312,8 @@ class EnemyBig(pg.sprite.Sprite):
             self.image = self.image_fly[0]
             self.health = HEALTH_ENEMY_BIG
         elif self._state == STATE_ENEMY_HIT and value == STATE_ENEMY_FLY:
-            self.image = self.image_fly[0]
+            # self.image = self.image_fly[0], 过100ms后再改
+            pg.time.set_timer(EVENT_ENEMY_HIT_EXPIRATION, 100)
 
         self._state = value
 
