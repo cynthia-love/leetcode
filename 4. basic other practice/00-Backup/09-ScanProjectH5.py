@@ -123,7 +123,7 @@ def main():
     work_all = None  # work_all存储最外层的子目录, 用于判断程序处理进度
     # 正则比较复杂, 先编译了
     pattern = r'(["\']|API.SERVICE.API_)([A-Z0-9]{10}|[A-Z0-9]{8}|[A-Z0-9]{6})\b["\']?'  # 三元表达式的写法毕竟少, 这种情况就不考虑8位和10位的了
-    pattern1 = re.compile(r'\b["\']?(rpc|longTimeRpc|processCode|tranCode|transCode|targetCode|specifyKeyProcessCode|transProcessCode)_?[0-9]?'
+    pattern1 = re.compile(r'\b["\']?(rpc|prdCod|sendRequest|longTimeRpc|processCode|tranCode|transCode|targetCode|specifyKeyProcessCode|transProcessCode)_?[0-9]?'
                           r'["\']?[\n\t ]*?[(:=][\n\t ]*?'+pattern)
     pattern2 = re.compile(r'\?[\n\t ]*?'+pattern+r'[\n\t ]*?:[\n\t ]*?'+pattern)
     for root, dirs, files in os.walk(var_d):
@@ -150,6 +150,9 @@ def main():
                             if line.strip().startswith("//"):
                                 continue
 
+                            if line.strip().startswith("/*") and '*/' in line:
+                                continue
+
                             if line.strip().startswith("/*"):
                                 isremark = True
                                 continue
@@ -174,6 +177,9 @@ def main():
                         for line in f.readlines():
 
                             if line.strip().startswith("//"):
+                                continue
+
+                            if line.strip().startswith("/*") and '*/' in line:
                                 continue
 
                             if line.strip().startswith("/*"):

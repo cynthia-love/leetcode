@@ -284,7 +284,7 @@ def main():
     userAuthSession = login(login_name, login_password, base_url)
 
     # 查询, 经测验，1个小时勉强顶得住，再长服务器就返回错误了
-    def pull(login_name, userAuthSession, base_url, time_start, time_end, dim, secondDimensionsNo="") -> list:
+    def pull(login_name, userAuthSession, base_url, time_start, time_end, dim, secondDimensionsNo="", time_type = 4) -> list:
         pull_url = base_url + "/imms/qryDimStatisInfo.do"
         # 注意这里params是区分类型的，下面的4如果设置为字符型就查不回来数据
         params = {
@@ -299,7 +299,7 @@ def main():
                 "endTime": time_end,
                 "firstDimensionsNo": dim,
                 "systemId": system_process,
-                "timeType": 4 if not var_day else 2,
+                "timeType": time_type,
                 "type": "MX",
                 "secondDimensionsNo": secondDimensionsNo
 
@@ -316,8 +316,8 @@ def main():
 
     print("数据拉取中...")
     # time_host = pull(login_name, userAuthSession, base_url, time_start, time_end, "ip")
-    time_data = pull(login_name, userAuthSession, base_url, time_start, time_end, "transCode")
-    base_data = pull(login_name, userAuthSession, base_url, base_start, base_end, "transCode")
+    time_data = pull(login_name, userAuthSession, base_url, time_start, time_end, "transCode", time_type=2 if var_day else 4)
+    base_data = pull(login_name, userAuthSession, base_url, base_start, base_end, "transCode", time_type=2 if var_day else 4)
 
     if not time_data or not base_data:
         print("拉取失败！可能服务器不稳定或时间设置有误，请再次尝试！")
@@ -620,6 +620,7 @@ def main():
                     list_freq = []
                     list_surate = []
                     list_dura = []
+
                     for i in range(24):
                         tmp_start = api_day_start.strftime("%Y-%m-%d %H:%M")
                         tmp_end = api_day_end.strftime("%Y-%m-%d %H:%M")
@@ -650,8 +651,6 @@ def main():
                         sm, sd, sn = mean(list_surate_new), std(list_surate, ddof=1), len(list_surate)
                         dm, dd, dn = mean(list_dura_new), std(list_dura, ddof=1), len(list_dura)
 
-                        # 频次的置信区间好像没什么用, 受时间点影响太大
-                        # print(spaces + "置信区间(99%-Frequency): {:.2f}~{:.2f}".format(fm-2.58*fd/fn**0.5, fm+2.58*fd/fn**0.5))
 
                         f_mid = median(list_freq)
                         f_worse_10 = mean(sorted(list_freq, reverse=True)[:int(len(list_freq)*0.1)])
@@ -665,10 +664,9 @@ def main():
                         s_mid = median(list_surate_new)
                         s_worse_10 = mean(sorted(list_surate_new)[:int(len(list_surate_new)*0.1)])
                         s_worse_20 = mean(sorted(list_surate_new)[:int(len(list_surate_new) * 0.2)])
-                        print(spaces+"均成功率({:.2%}):".format(api_surate if api_surate else ""))
+                        print(spaces+"成功率(当前{:.2%}):".format(api_surate if api_surate else ""))
 
-                        # 记住这里的双层format用法, 内层填值, 外层控制整体格式
-                        print(spaces+"        "+"{:<19}{}".format("日均值: {:.2%}".format(sm), "中位数: {:.2%}".format(s_mid)))
+                        print(spaces+"        "+"{:<18}{}".format("基准日均: {:.2%}".format(sm), "中位数: {:.2%}".format(s_mid)))
                         print(spaces+"        "+"{:<20}{}".format("最低10%: {:.2%}".format(s_worse_10), "最低20%: {:.2%}".format(s_worse_20)))
                         print(spaces+"        "+"{:<18}{}".format("置信区间(99%): ", "{:.2%}~{:.2%}".format(sm-2.58*sd/sn**0.5, sm+2.58*sd/sn**0.5)))
 
@@ -677,9 +675,9 @@ def main():
                         d_mid = median(list_dura_new)
                         d_worse_10 = mean(sorted(list_dura_new, reverse=True)[:int(len(list_dura_new)*0.1)])
                         d_worse_20 = mean(sorted(list_dura_new, reverse=True)[:int(len(list_dura_new) * 0.2)])
-                        print(spaces+"平均耗时({:.2f}):".format(api_dura if api_dura else ""))
+                        print(spaces+"平均耗时(当前{:.2f}):".format(api_dura if api_dura else ""))
 
-                        print(spaces+"        "+"{:<19}{}".format("日均值: {:.2f}".format(dm), "中位数: {:.2f}".format(d_mid)))
+                        print(spaces+"        "+"{:<18}{}".format("基准日均: {:.2f}".format(dm), "中位数: {:.2f}".format(d_mid)))
                         print(spaces+"        "+"{:<20}{}".format("最高10%: {:.2f}".format(d_worse_10), "最高20%: {:.2f}".format(d_worse_20)))
                         print(spaces+"        "+"{:<18}{}".format("置信区间(99%): ", "{:.2f}~{:.2f}".format(dm-2.58*dd/dn**0.5, dm+2.58*dd/dn**0.5)))
 
