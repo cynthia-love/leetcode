@@ -35,6 +35,8 @@ class EnemySmall(pg.sprite.Sprite):
         self.tick = pg.time.get_ticks()
         self.delay = 1000 // FPS_ANIMATION
 
+        self.screen = pg.display.get_surface()  # 精灵可以自己获取最底层screen, 不用主函数传
+
     # 表面上看到的敌机是无限的, 其实是有限的
     def reset(self):
         self.state = STATE_ENEMY_FLY
@@ -55,6 +57,14 @@ class EnemySmall(pg.sprite.Sprite):
                 else:
                     self.reset()
                 self.tick = tick
+
+    # 血条用粗线段就行, 没必要一定要矩形; 位置稍微往上点
+    def showHealth(self):
+        percent = self.health / HEALTH_ENEMY_SMALL
+        color  = GREEN if percent > 0.2 else RED
+        pg.draw.line(self.screen, WHITE, (self.rect.left, self.rect.top-5), (self.rect.right, self.rect.top-5), 2)
+        pg.draw.line(self.screen, color, (self.rect.left, self.rect.top-5),
+                     (self.rect.left+int(self.rect.width*percent), self.rect.top-5), 2)
 
     def _getstate(self): return self._state
     def _setstate(self, value):
@@ -107,6 +117,8 @@ class EnemyMiddle(pg.sprite.Sprite):
         self.tick = pg.time.get_ticks()
         self.delay = 1000 // FPS_ANIMATION
 
+        self.screen = pg.display.get_surface()  # 精灵可以自己获取最底层screen, 不用主函数传
+
     # 表面上看到的敌机是无限的, 其实是有限的
     def reset(self):
         self.state = STATE_ENEMY_FLY
@@ -128,6 +140,15 @@ class EnemyMiddle(pg.sprite.Sprite):
                     self.reset()
                 self.tick = tick
 
+    # 血条用粗线段就行, 没必要一定要矩形; 位置稍微往上点
+    def showHealth(self):
+        percent = self.health / HEALTH_ENEMY_MIDDLE
+        color  = GREEN if percent > 0.2 else RED
+        pg.draw.line(self.screen, WHITE, (self.rect.left, self.rect.top-5), (self.rect.right, self.rect.top-5), 2)
+        pg.draw.line(self.screen, color, (self.rect.left, self.rect.top-5),
+                     (self.rect.left+int(self.rect.width*percent), self.rect.top-5), 2)
+
+
     def _getstate(self):
         return self._state
 
@@ -146,6 +167,8 @@ class EnemyMiddle(pg.sprite.Sprite):
             self.image = self.image_fly
             self.health = HEALTH_ENEMY_MIDDLE
         elif self._state == STATE_ENEMY_HIT and value == STATE_ENEMY_FLY:
+            # 如果只用state变量有个小问题, 状态改变是实时的, 比如某一帧碰撞
+            # 了, 显示hit图片, 下一帧没碰, 不希望变那么快, 不然肉眼分辨不出来
             self.image = self.image_fly
 
         self._state = value
@@ -197,11 +220,13 @@ class EnemyBig(pg.sprite.Sprite):
         self.tick = pg.time.get_ticks()
         self.delay = 1000 // FPS_ANIMATION
 
+        self.screen = pg.display.get_surface()  # 精灵可以自己获取最底层screen, 不用主函数传
+
     # 表面上看到的敌机是无限的, 其实是有限的
     def reset(self):
         self.state = STATE_ENEMY_FLY
         self.rect.right = random.randint(self.rect.width, WIDTH)
-        self.rect.bottom = random.randint(-10 * HEIGHT, -1 * HEIGHT)
+        self.rect.bottom = random.randint(-15 * HEIGHT, -5 * HEIGHT)
 
     def update(self):
         if self.state == STATE_ENEMY_FLY:
@@ -232,6 +257,15 @@ class EnemyBig(pg.sprite.Sprite):
                     self.reset()
                 self.tick = tick
 
+    # 血条用粗线段就行, 没必要一定要矩形; 位置稍微往上点
+    def showHealth(self):
+        percent = self.health / HEALTH_ENEMY_BIG
+        color  = GREEN if percent > 0.2 else RED
+        pg.draw.line(self.screen, WHITE, (self.rect.left, self.rect.top-5), (self.rect.right, self.rect.top-5), 2)
+        pg.draw.line(self.screen, color, (self.rect.left, self.rect.top-5),
+                     (self.rect.left+int(self.rect.width*percent), self.rect.top-5), 2)
+
+
     def _getstate(self):
         return self._state
 
@@ -249,7 +283,7 @@ class EnemyBig(pg.sprite.Sprite):
             self.image = self.image_destroy[0]
         elif self._state == STATE_ENEMY_DESTROY and value == STATE_ENEMY_FLY:
             self.image = self.image_fly[0]
-            self.health = HEALTH_ENEMY_MIDDLE
+            self.health = HEALTH_ENEMY_BIG
         elif self._state == STATE_ENEMY_HIT and value == STATE_ENEMY_FLY:
             self.image = self.image_fly[0]
 

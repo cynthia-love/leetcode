@@ -15,6 +15,7 @@ from module.bullet import *
 from module.enemy import *
 from module.supply import *
 from pygame.locals import *
+from collections import deque
 
 
 # 获取程序所在目录, 兼容.py和.exe
@@ -74,7 +75,7 @@ class Resource:
         # 下放结束游戏图标
         self.s3_img_stop = self.s3_rect_stop = None
 
-    def init(self):
+    def init(self, screen):
         # 也不是所有的元素都能在这里初始化, 比如有一些文字需要渲染的时候才能知道渲染什么
         """PLAY阶段"""
         # 背景图
@@ -116,10 +117,10 @@ class Resource:
         # WIDTH, HEIGHT, SPEED_PLAYER, FPS_ANIMATION没必要通过主函数传参吧, 本来就是为了简洁
         # 提取了全局变量, 再传参岂不是又变复杂了
         # 子弹
-        self.s1_list_bullet1 = list()
+        self.s1_list_bullet1 = deque()
         for i in range(NUM_BULLET1):
             self.s1_list_bullet1.append(Bullet(self.s1_player, "middle"))
-        self.s1_list_bullet2 = list()
+        self.s1_list_bullet2 = deque()
         for i in range(NUM_BULLET2):
             self.s1_list_bullet2.append(Bullet(self.s1_player, "left"))
             self.s1_list_bullet2.append(Bullet(self.s1_player, "right"))
@@ -206,14 +207,14 @@ def main():
     rect_screen_alpha = screen_alpha.get_rect()  # 声明了备用
 
     r = Resource()
-    r.init()
+    r.init(screen)
 
     # 各个阶段都要用到的变量, 变量变量, 就是会动态变的量
     stage = PLAY
     clock = pg.time.Clock()
 
     """PLAY阶段"""
-    s1_score = 1000
+    s1_score = 0
     s1_level = 1  # 声明level是为了保证分数达标后游戏难度只升级一次
     s1_img_pause = r.s1_img_pause  # pause这里rect没必要再声明个变量了, 因为位置一样, 实在不行用三元表达式也行, 总比多个变量强
     s1_num_bomb = NUM_BOMB
@@ -251,14 +252,10 @@ def main():
                 sys.exit()
 
         if stage == PLAY:
+            print(clock.get_fps())
             # 1. 先画背景图
             screen.blit(r.s1_img_bg, r.s1_rect_bg)
-            # 2. 再画左上角分数
-            r.s1_text_score = r.s1_font_score.render("Score: {}".format(s1_score), True,
-                                                     WHITE)
-            r.s1_rect_score = r.s1_text_score.get_rect()
-            r.s1_rect_score.topleft = (10, 5)
-            screen.blit(r.s1_text_score, r.s1_rect_score)
+
             # 3. 再画右上角暂停键
             screen.blit(s1_img_pause,
                         r.s1_rect_pause if s1_img_pause == r.s1_img_pause else r.s1_rect_pause_pressed)
@@ -305,7 +302,9 @@ def main():
                     if s1_num_bomb < 3: s1_num_bomb += 1
             # (4)敌机
             r.s1_group_enemy_all.draw(screen)
-            # 玩家敌机碰撞
+            for each in r.s1_group_enemy_all:
+                each.showHealth()
+            # 玩家敌机碰撞, 注意玩家敌机碰撞不加分
             # 貌似这部分代码放update前和后都不合适
             # 首先碰撞检测应该是已经渲染出来的东西, 所以放update后面不合适
             # 其次, 切换状态后还没渲染就去调update, 放update前面也不合适....
@@ -315,8 +314,30 @@ def main():
                 if collides:
                     r.s1_player.state = STATE_PLAYER_DESTROY
                     for each in collides:
-                        each.state = STATE_ENEMY_DESTROY
+                        each.health = 0
             # 子弹敌机碰撞
+            for each in s1_list_bullet:
+                if each.active:
+                    collides = pg.sprite.spritecollide(each, r.s1_group_enemy_all, False, pg.sprite.collide_mask)
+
+                    if each.rect.top < 0 or collides:
+                        each.active = False
+
+                    for item in r.s1_group_enemy_all:
+                        if item.state not in [STATE_ENEMY_FLY, STATE_ENEMY_HIT]:
+                            continue
+                        if item in collides:
+                            item.health -= 1
+                            if item.state == STATE_ENEMY_DESTROY:
+                                if item in r.s1_group_enemy_small:
+                                    s1_score += SCORE_SMALL
+                                if item in r.s1_group_enemy_middle:
+                                    s1_score += SCORE_MIDDLE
+                                if item in r.s1_group_enemy_big:
+                                    s1_score += SCORE_BIG
+                        #else:
+                        #   item.state = STATE_ENEMY_FLY
+
 
             # 补给敌机碰撞(即使用炸弹)
             for e in event:
@@ -327,13 +348,27 @@ def main():
                         for each in r.s1_group_enemy_all:
                             if each.state in [STATE_ENEMY_FLY, STATE_ENEMY_HIT] \
                                     and each.rect.bottom > 0 and each.rect.top < HEIGHT:
-                                each.state = STATE_ENEMY_DESTROY
+                                # each.state = STATE_ENEMY_DESTROY
+                                # 由于enemy类里给health加了property, 且能联动改state
+                                # 这里改health好点; 注意state和health一定要是单向联动改
+                                # 主函数里用驱动方那个; 不能双向联动, 会死循环
+                                each.health = 0
                                 if each in r.s1_group_enemy_small:
                                     s1_score += SCORE_SMALL
                                 if each in r.s1_group_enemy_middle:
                                     s1_score += SCORE_MIDDLE
                                 if each in r.s1_group_enemy_big:
                                     s1_score += SCORE_BIG
+
+
+            # 2. 再画左上角分数;
+            # 由于子弹敌机碰撞和补给敌机碰撞可能加分, 所以分数渲染本来在静态资源渲染区
+            # 考虑再三, 还是移到下边吧
+            r.s1_text_score = r.s1_font_score.render("Score: {}".format(s1_score), True,
+                                                     WHITE)
+            r.s1_rect_score = r.s1_text_score.get_rect()
+            r.s1_rect_score.topleft = (10, 5)
+            screen.blit(r.s1_text_score, r.s1_rect_score)
 
             """***************"""
 
@@ -369,15 +404,22 @@ def main():
                     s1_tickb = tick
 
             if s1_frame % FRAME_BULLET == 0:
+                # 这里如果不想用全局索引, 用队列的话
+                # 由于要频繁pop, append, 千万不要直接用list
+                # 用双向队列会比用list性能高很多
+                # 经进一步测验, 这快代码用lsit还是dequeue好像差别不大...
+                # 性能主要卡在显卡渲染上, 虽然看着是双倍子弹会导致整体慢
+                # 但比如把单列子弹数量调成双列的一倍, 一样帧数会降低很多...
+                # 即慢不慢和pop, append没关系, 和子弹的总数量有关系
                 if not s1_leftb:
-                    bullet = s1_list_bullet.pop(0)
+                    bullet = s1_list_bullet.popleft()
                     bullet.fire()
                     s1_list_bullet.append(bullet)
                 else:
-                    bullet = s1_list_bullet.pop(0)
+                    bullet = s1_list_bullet.popleft()
                     bullet.fire()
                     s1_list_bullet.append(bullet)
-                    bullet = s1_list_bullet.pop(0)
+                    bullet = s1_list_bullet.popleft()
                     bullet.fire()
                     s1_list_bullet.append(bullet)
             for each in s1_list_bullet:
@@ -402,6 +444,38 @@ def main():
 
             # (4)敌机
             r.s1_group_enemy_all.update()
+            # 再升级添加新的
+            if s1_level == 1 and s1_score >= SCORE_LEVEL1_UPGRADE:
+                s1_level = 2
+                r.s1_sound_upgrade.play()
+                r.add_enemy_small(NUM_INC_ENEMY_SMALL)
+                r.add_enemy_middle(NUM_INC_ENEMY_MIDDLE)
+                r.add_enemy_big(NUM_INC_ENEMY_BIG)
+                r.inc_speed_enemy_small()
+            elif s1_level == 2 and s1_score >= SCORE_LEVEL2_UPGRADE:
+                s1_level = 3
+                r.s1_sound_upgrade.play()
+                r.add_enemy_small(NUM_INC_ENEMY_SMALL)
+                r.add_enemy_middle(NUM_INC_ENEMY_MIDDLE)
+                r.add_enemy_big(NUM_INC_ENEMY_BIG)
+                r.inc_speed_enemy_small()
+                r.inc_speed_enemy_middle()
+            elif s1_level == 3 and s1_score >= SCORE_LEVEL3_UPGRADE:
+                s1_level = 4
+                r.s1_sound_upgrade.play()
+                r.add_enemy_small(NUM_INC_ENEMY_SMALL)
+                r.add_enemy_middle(NUM_INC_ENEMY_MIDDLE)
+                r.add_enemy_big(NUM_INC_ENEMY_BIG)
+                r.inc_speed_enemy_small()
+                r.inc_speed_enemy_middle()
+            elif s1_level == 4 and s1_score >= SCORE_LEVEL4_UPGRADE:
+                s1_level = 5
+                r.s1_sound_upgrade.play()
+                r.add_enemy_small(NUM_INC_ENEMY_SMALL)
+                r.add_enemy_middle(NUM_INC_ENEMY_MIDDLE)
+                r.add_enemy_big(NUM_INC_ENEMY_BIG)
+                r.inc_speed_enemy_small()
+                r.inc_speed_enemy_middle()
 
             """***************"""
 
@@ -500,6 +574,8 @@ def main():
                 screen.blit(r.s1_supply_bomb.image, r.s1_supply_bomb.rect)
             # (4)敌机
             r.s1_group_enemy_all.draw(screen)
+            for each in r.s1_group_enemy_all:
+                each.showHealth()
 
             """***************"""
             # PAUSE阶段没有精灵更新和控制区域
