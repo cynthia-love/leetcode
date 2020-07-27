@@ -49,7 +49,7 @@ def main():
     print("-i 条数, 分析交易量排名前x的接口, 可与-s同步生效; -sys mobs/ecbpin/ecbpout, 指定分析系统, 默认mobs")
     print("-verbose 此参数可以给接口增加更多调用信息, 要保证当前目录有h5_api_all.xlsx, 不能改名, 没有请先执行scan")
     print("如果同时指定-s -e -i -f, 则先提取指定接口, 再去掉要排除的, 再从中选取前x, 再把x个进行低频过滤得到要分析接口")
-    print("部分接口波动大, 7.24新增-cd, -td, 用于指定比较日(非当日), 基准日, 以天为单位去比较, 此时-c, -t, -l失效")
+    print("-cd, -td, 用于指定比较日(非当日), 基准日, 以天为单位去比较, -td不指定默认上周同一天, 此时-c, -t, -l失效")
     print("**********************************************************************************************************")
 
     login_name, login_password, now = None, None, datetime.now()
@@ -169,6 +169,9 @@ def main():
 
             if match(r"\d{4}-\d{2}-\d{2}", s):
                 var_day = s
+                if var_day == t2s(now)[:10]:
+                    print("-cd不可指定当日!")
+                    return
             else:
                 print("无效的待比较日期！")
                 return
@@ -177,6 +180,9 @@ def main():
 
             if match(r"\d{4}-\d{2}-\d{2}", s):
                 var_day_base = s
+                if var_day_base == t2s(now)[:10]:
+                    print("-td不可指定当日")
+                    return
             else:
                 print("无效的基准日期！")
                 return
@@ -197,8 +203,9 @@ def main():
         base_start = base_end = var_day.strftime("%Y-%m-%d")
         argv_l = 24*60
 
-    if var_day_base:
-        base_start = base_end = var_day_base
+        if var_day_base:
+            base_start = base_end = var_day_base
+
 
     # 读取接口扫描文档
     if isverbose:
@@ -314,15 +321,63 @@ def main():
             print("拉取失败！可能服务器不稳定或时间设置有误，请再次尝试！")
             exit(1)
 
-    print("数据拉取中...")
-    # time_host = pull(login_name, userAuthSession, base_url, time_start, time_end, "ip")
-    time_data = pull(login_name, userAuthSession, base_url, time_start, time_end, "transCode", time_type=2 if var_day else 4)
-    base_data = pull(login_name, userAuthSession, base_url, base_start, base_end, "transCode", time_type=2 if var_day else 4)
+    print("数据拉取中...", end="", flush=True)
 
-    if not time_data or not base_data:
-        print("拉取失败！可能服务器不稳定或时间设置有误，请再次尝试！")
-        exit(1)
-    print("数据拉取成功...")
+    # 如果是按天,一次性拉
+    if var_day:
+        time_data = pull(login_name, userAuthSession, base_url, time_start, time_end, "transCode", time_type=2 if var_day else 4)
+        base_data = pull(login_name, userAuthSession, base_url, base_start, base_end, "transCode", time_type=2 if var_day else 4)
+        print("拉取成功!")
+    else:  # 否则一分钟一分钟拉
+        time_data, base_data = [], []
+
+        count = 0
+        # 先拉当前
+        time = s2t(time_start)
+        while time <= s2t(time_end):
+            res = pull(login_name, userAuthSession, base_url, t2s(time), t2s(time), "transCode", time_type=2 if var_day else 4)
+            if res: time_data.extend(res)
+            time += timedelta(minutes=1)
+            count += 1
+            if count == int(2*argv_l*0.1):
+                print("10%...", end="", flush=True)
+            elif count == int(2*argv_l*0.2):
+                print("20%...", end="", flush=True)
+            elif count == int(2*argv_l*0.3):
+                print("30%...", end="", flush=True)
+            elif count == int(2*argv_l*0.4):
+                print("40%...", end="", flush=True)
+            elif count == int(2*argv_l*0.5):
+                print("50%...", end="", flush=True)
+
+        if not time_data:
+            print("拉取失败！请检查网络或时间设置！")
+            exit(1)
+
+        # 在拉基准
+        time = s2t(base_start)
+        while time <= s2t(base_end):
+            res = pull(login_name, userAuthSession, base_url, t2s(time), t2s(time), "transCode", time_type=2 if var_day else 4)
+            if res: base_data.extend(res)
+            time += timedelta(minutes=1)
+            count += 1
+            if count == int(2*argv_l*0.6):
+                print("60%...", end="", flush=True)
+            elif count == int(2*argv_l*0.7):
+                print("70%...", end="", flush=True)
+            elif count == int(2*argv_l*0.8):
+                print("80%...", end="", flush=True)
+            elif count == int(2*argv_l*0.9):
+                print("90%...", end="", flush=True)
+            elif count == int(2*argv_l*1.0):
+                print("100%...", end="", flush=True)
+
+        if not base_data:
+            print("拉取失败！请检查网络或参数设置！")
+            exit(1)
+
+    print("拉取成功!")
+    print("**********************************************************************************************************")
 
     # 按secondDimensionsNo将时间段内的数值加总
     def handle_res(res):
@@ -341,7 +396,6 @@ def main():
             dict_res[key].extend([dict_res[key][3] / dict_res[key][2], dict_res[key][4] / dict_res[key][2]])
         return dict_res
 
-    # dict_time_host, dict_time_data, dict_base_data = handle_res(time_host), handle_res(time_data), handle_res(base_data)
     dict_time_data, dict_base_data = handle_res(time_data), handle_res(base_data)
     # 把原始数据存起来, 避免处理过程中有丢失
     dict_time_data_back = copy.deepcopy(dict_time_data)
@@ -560,29 +614,53 @@ def main():
 
     max_index = min(max_print, len(v_cmp_freq_abs))
 
-    def printf(notes, l):
+    def printf(notes, l, order):
         print('{}的{}个接口为: '.format(notes, max_index))
-        print("{:<{width}}{:<12}{:<12}{:<18}{:<12}{:<12}{:<18}{:<12}{:<12}{:<18}".format(
-            "TranCode", "Frequency", "Base", "CHANGE", "Success", "Base", "CHANGE", "Duration", 'Base', 'CHANGE',
-            width=len_trancode))
-        for i in range(max_index):
-            item = l[i]
-            print("{:<{width}}{:<12.2f}{:<12.2f}{:<18.2%}{:<12.2f}{:<12.2f}{:<18.2%}{:<12.2f}{:<12.2f}{:<18.2%}".format(
-                '*' + item[0] if item[0] in apis else item[0], item[2] / argv_l, item[7] / argv_l, item[9],
-                                                               100 * item[5], 100 * item[10],
-                item[11], item[6], item[13], item[15], width=len_trancode))
+
+        if order == 1:
+            print("{:<{width}}{:<12}{:<12}{:<18}{:<12}{:<12}{:<18}{:<12}{:<12}{:<18}".format(
+                "TranCode", "Frequency", "Base", "CHANGE", "Success", "Base", "CHANGE", "Duration", 'Base', 'CHANGE',
+                width=len_trancode))
+            for i in range(max_index):
+                item = l[i]
+                print(
+                    "{:<{width}}{:<12.2f}{:<12.2f}{:<18.2%}{:<12.2f}{:<12.2f}{:<18.2%}{:<12.2f}{:<12.2f}{:<18.2%}".format(
+                        '*' + item[0] if item[0] in apis else item[0], item[2] / argv_l, item[7] / argv_l, item[9],
+                                                                       100 * item[5], 100 * item[10],
+                        item[11], item[6], item[13], item[15], width=len_trancode))
+        elif order == 2:
+            print("{:<{width}}{:<12}{:<12}{:<18}{:<12}{:<12}{:<18}{:<12}{:<12}{:<18}".format(
+                "TranCode", "Success", "Base", "CHANGE", "Frequency", "Base", "CHANGE", "Duration", 'Base', 'CHANGE',
+                width=len_trancode))
+            for i in range(max_index):
+                item = l[i]
+                print(
+                    "{:<{width}}{:<12.2f}{:<12.2f}{:<18.2%}{:<12.2f}{:<12.2f}{:<18.2%}{:<12.2f}{:<12.2f}{:<18.2%}".format(
+                        '*' + item[0] if item[0] in apis else item[0], 100 * item[5], 100 * item[10],
+                        item[11], item[2] / argv_l, item[7] / argv_l, item[9], item[6], item[13], item[15], width=len_trancode))
+        elif order == 3:
+            print("{:<{width}}{:<12}{:<12}{:<18}{:<12}{:<12}{:<18}{:<12}{:<12}{:<18}".format(
+                "TranCode", "Duration", "Base", "CHANGE", "Frequency", "Base", "CHANGE", "Success", 'Base', 'CHANGE',
+                width=len_trancode))
+            for i in range(max_index):
+                item = l[i]
+                print(
+                    "{:<{width}}{:<12.2f}{:<12.2f}{:<18.2%}{:<12.2f}{:<12.2f}{:<18.2%}{:<12.2f}{:<12.2f}{:<18.2%}".format(
+                        '*' + item[0] if item[0] in apis else item[0], item[6], item[13], item[15],
+                        item[2] / argv_l, item[7] / argv_l, item[9], 100 * item[5], 100 * item[10],
+                        item[11], width=len_trancode))
 
     print("**********************************************************************************************************")
     # printf('4. 交易量变化(量差)最大', v_cmp_freq_abs)
-    printf('4. 相对基准时段交易量变化最大', v_cmp_freq_rel)
+    printf('4. 相对基准时段交易量变化最大', v_cmp_freq_rel, 1)
     print("***********************************************")
 
-    printf('5. 相对基准时段成功率变化最大', v_cmp_succ_abs)
+    printf('5. 相对基准时段成功率变化最大', v_cmp_succ_abs, 2)
     print("***********************************************")
 
     # printf('5. 成功率变化(比差)最大', v_cmp_succ_rel)
     # printf('8. 平均耗时变化(量差)最大', v_cmp_dur_abs)
-    printf('6. 相对基准时段平均耗时变化最大', v_cmp_dur_rel)
+    printf('6. 相对基准时段平均耗时变化最大', v_cmp_dur_rel, 3)
 
     # 由于对比列表里没打印中文描述, 不方便, 开一个线程去查
     class PrintDes(Thread):
@@ -592,49 +670,71 @@ def main():
         def run(self):
             spaces = "                                                "
             while True:
-                print(
-                    "**********************************************************************************************************")
-                trancode = input("输入接口编号查询接口中文描述, 输入q退出: ").upper().strip()
-                if trancode == 'Q':
+                print("**********************************************************************************************************")
+                pin = input("输入接口编号查询接口中文描述, 输入q退出: ").upper().strip()
+
+                if pin == 'Q':
                     exit(0)
-                elif trancode == "":
+                elif pin == "":
                     continue
                 else:
-                    finded = False
+                    trancode = None
                     api_freq, api_surate, api_dura = None, None, None
                     for key in dict_time_data_back:
-                        if key.upper() == trancode:
-                            finded = True
+                        if key.upper() == pin:
+                            trancode = key
                             api_freq = dict_time_data_back[key][2]/argv_l
                             api_surate = dict_time_data_back[key][5]
                             api_dura = dict_time_data_back[key][6]
                             print(spaces + "接口描述: " + dict_time_data_back[key][1])
                             print("")
 
+                    for key, value in h5_api_all.items():
+                        r = re.search(r"\b{}\b".format(pin), value['api'], re.IGNORECASE)
+                        if r:
+                            trancode = r.group()
+                            print(spaces + "涉及页面: " + key + ": " + value['des'])
 
-                    # 去查询基准日整体均值和波动率, 并给出参考均值
-                    # time_data = pull(login_name, userAuthSession, base_url, time_start, time_end, "transCode")
-                    api_day_start = datetime.strptime(base_start[:10], "%Y-%m-%d")
+                    if not trancode:
+                        print(spaces+"未检索到相关信息, 请检查接口编号!")
+                        continue
+                    # 拉取基准日全天数据
+                    api_day_start = datetime.strptime(base_end[:10], "%Y-%m-%d")
                     api_day_end = api_day_start+timedelta(minutes=59)
-                    # print("拉取接口基准日全部数据以计算统计量...")
+
                     list_freq = []
                     list_surate = []
                     list_dura = []
 
+                    base_plot = []
                     for i in range(24):
                         tmp_start = api_day_start.strftime("%Y-%m-%d %H:%M")
                         tmp_end = api_day_end.strftime("%Y-%m-%d %H:%M")
                         try:
                             tmp_api = pull(login_name, userAuthSession, base_url, tmp_start, tmp_end, "transCode", trancode)
-                            list_freq.extend([float(x['tradeCount']) for x in tmp_api])
-                            list_surate.extend([float(x['successRate'])/100 for x in tmp_api])
-                            list_dura.extend([float(x['avgTime']) for x in tmp_api])
+                            # tmp_api不为空时才去extend
+                            if tmp_api:
+                                list_freq.extend([float(x['tradeCount']) for x in tmp_api])
+                                list_surate.extend([float(x['successRate']) / 100 for x in tmp_api])
+                                list_dura.extend([float(x['avgTime']) for x in tmp_api])
+                                base_plot.extend([(
+                                    # 这里不能用.time()转成datetime.time格式, matplotlib不支持
+                                    datetime.strptime(x['tradeTime'], "%H:%M"),
+                                    float(x['tradeCount']),
+                                    float(x['successRate']) / 100,
+                                    float(x['avgTime'])
+                                ) for x in tmp_api])
+
+                            if i == 0: print("绘制折线图...", end="", flush=True)
+                            if i == 11: print("25%...", end="", flush=True)
+                            if i == 23: print("50%...", end="", flush=True)
                         except:
                             pass
 
                         api_day_start = api_day_end+timedelta(minutes=1)
                         api_day_end = api_day_start + timedelta(minutes=59)
-                    if len(list_freq) >= 30:  # 如果一天还调不到30次, 就算了
+                    """ 不再计算统计量, 画图更直观
+                    if len(list_freq) >= 30:  # 如果一天还调不到30次, 就算了(有30个分钟调到)
                         finded = True
 
                         # 重构list_surate和list_dura, 加上权重
@@ -664,7 +764,13 @@ def main():
                         s_mid = median(list_surate_new)
                         s_worse_10 = mean(sorted(list_surate_new)[:int(len(list_surate_new)*0.1)])
                         s_worse_20 = mean(sorted(list_surate_new)[:int(len(list_surate_new) * 0.2)])
-                        print(spaces+"成功率(当前{:.2%}):".format(api_surate if api_surate else ""))
+                        # 注意这里不能用三元表达式, 因为0.0会是False进而给了一个str类型到%
+                        # print(spaces + "成功率(当前{:.2%}):".format(api_surate if api_surate else ""))
+                        # 后面的耗时不用管，　那个不可能为０
+                        if "api_surate" in vars():  # 可以这么判断变量是否undefined, 也可以先初始化None, 然后用==None判断
+                            print(spaces+"成功率(当前{:.2%}):".format(api_surate))
+                        else:
+                            print(spaces + "成功率(当前无调用):")
 
                         print(spaces+"        "+"{:<18}{}".format("基准日均: {:.2%}".format(sm), "中位数: {:.2%}".format(s_mid)))
                         print(spaces+"        "+"{:<20}{}".format("最低10%: {:.2%}".format(s_worse_10), "最低20%: {:.2%}".format(s_worse_20)))
@@ -682,14 +788,51 @@ def main():
                         print(spaces+"        "+"{:<18}{}".format("置信区间(99%): ", "{:.2f}~{:.2f}".format(dm-2.58*dd/dn**0.5, dm+2.58*dd/dn**0.5)))
 
                         print("")
+                    """
 
-                    for key, value in h5_api_all.items():
-                        if re.search(r"\b{}\b".format(trancode), value['api'], re.IGNORECASE):
-                            finded = True
-                            print(spaces + "涉及页面: " + key + ": " + value['des'])
+                    # 拉取分析日全天数据, 代码逻辑完全一样
+                    api_day_start = datetime.strptime(time_end[:10], "%Y-%m-%d")
+                    api_day_end = api_day_start + timedelta(minutes=59)
+                    time_plot = []
+                    for i in range(24):
+                        tmp_start = api_day_start.strftime("%Y-%m-%d %H:%M")
+                        tmp_end = api_day_end.strftime("%Y-%m-%d %H:%M")
+                        try:
+                            tmp_api = pull(login_name, userAuthSession, base_url, tmp_start, tmp_end, "transCode",
+                                           trancode)
+                            # tmp_api不为空时才去extend
+                            if tmp_api:
+                                time_plot.extend([(
+                                    datetime.strptime(x['tradeTime'], "%H:%M"),
+                                    float(x['tradeCount']),
+                                    float(x['successRate']) / 100,
+                                    float(x['avgTime'])
+                                ) for x in tmp_api])
 
-                    if not finded:
-                        print(spaces + "未查询到接口任何信息, 请检查输入!")
+                            if i == 11: print("75%...", end="", flush=True)
+                            if i == 23: print("100%...", end="", flush=True)
+                        except:
+                            pass
+
+                        api_day_start = api_day_end + timedelta(minutes=1)
+                        api_day_end = api_day_start + timedelta(minutes=59)
+
+                    if time_plot: time_plot.pop(-1)  # 基准日的最后一分钟不全, 去掉
+
+                    if len(time_plot) < 10 or len(base_plot) < 10:
+                        print("频次过低, 绘制失败!")
+                        continue
+                    print("绘制成功!")
+                    with open(getpath("plot.pickle"), "wb") as f:
+                        pickle_dump([time_plot, base_plot], f)
+                    # os.system("start /b python imms_draw.py")
+                    # os.popen("start /b python imms_draw.py")
+                    # start /b 可以启动一个线程去运行, 不影响主进程继续往下
+                    # os.system返回值是脚本的退出状态码0, 1, 2
+                    # os.popen返回脚本执行的输出内容
+                    # 不过用os.popen试了下, terminal里还是会打印东西...
+                    # 得用1>nul, 2>nul重定向, 1表示标准输出, 2表示标准错误, 标准指cmd窗口, nul表示空设备
+                    os.system("start /b imms_draw -trancode {} -cd {} -td {} 1>nul 2>nul".format(trancode, time_end[:10], base_end[:10]))
 
     thread = PrintDes()
     thread.setDaemon(False)
