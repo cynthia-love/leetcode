@@ -16,7 +16,7 @@ from numpy import std, save as numpy_save, load as numpy_load
 
 
 def main():
-    session, base_url = Session(), "http://xxx.xxx.xxx.xxx:8081"
+    session, base_url = Session(), "http://xxx.xxx.xxx.xxx:xxxx"
 
     # 处理用户输入
     print("**********************************************************************************************************")

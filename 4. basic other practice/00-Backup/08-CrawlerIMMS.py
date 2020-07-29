@@ -39,7 +39,7 @@ def s2t(s):
 
 
 def main():
-    session, base_url = Session(), "http://182.218.155.29:8081"
+    session, base_url = Session(), "http://xxx.xxx.xxx.xxx:xxxx"
 
     # 处理用户输入, 示例:　python imms.py -worse -c "2020-06-29 06:00"
     print("**********************************************************************************************************")
