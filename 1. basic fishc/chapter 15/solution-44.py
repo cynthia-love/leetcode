@@ -31,7 +31,7 @@ class StopWatch(Frame):
         self.stage = INIT
 
         self.base = None  # 基准时间
-        self.time = None  # 实时时间
+        self.time = None  # 已持续时间, 单位秒, 带小数
 
         # 设置三个变量, 文本, 左右按钮名
         self.text = StringVar()
@@ -40,7 +40,8 @@ class StopWatch(Frame):
 
         self.timer = None  # after定时器
 
-        self.reset()  # 初始化变量值
+        self.init()  # 初始化变量值
+        # 注意有一点, pygame重新开始可以直接main(), tkinter不行, 还是得手动去重置变量值
 
         # 画页面
         # 注意, tkinter只能设置窗体整体的透明度, 不支持设置组件bg属性透明, 但好像会继承窗体的透明度
@@ -68,7 +69,9 @@ class StopWatch(Frame):
         self.list.config(yscrollcommand=sb.set)
         sb.config(command=self.list.yview)
 
-    def reset(self):
+    def init(self):
+        self.time = 0
+
         self.text.set("00:00:00")
         self.text_button1.set("计次")
         self.text_button2.set("启动")
@@ -81,12 +84,12 @@ class StopWatch(Frame):
 
 
     def t2s(self, t):
-        # timedelta转成分分:秒秒:毫秒, 不能直接用strftime转
+        # t存的是带小数的秒
         # 灵活利用多级嵌套format
         return "{}:{}:{}".format(
-            "{:0>2d}".format(t.seconds // 60),
-            "{:0>2d}".format(t.seconds % 60),
-            "{:0>6d}".format(t.microseconds)[:2]
+            "{:0>2d}".format(int(t // 60)),
+            "{:0>2d}".format(int(t % 60)),
+            "{:0>2d}".format(int(t % 1 * 100 // 1))
         )
 
 
@@ -96,24 +99,36 @@ class StopWatch(Frame):
         self.stage = RUN
 
     def update(self):
-        self.time = datetime.now()
-        self.text.set(self.t2s(self.time-self.base))
+        now = datetime.now()
+        self.time += (now-self.base).total_seconds()
+        self.base = now
+
+        self.text.set(self.t2s(self.time))
         self.timer = self.after(self.delay, self.update)
 
 
-root = Tk()
-root.title("Stop Watch")
-root.geometry("370x600+600+150")  # 后面的padx和pady是相对于屏幕的位置
-# root.iconbitmap("img/watch.ico") 好像设置了没用, 不知道是不是mac操作系统的原因
-# root['background'] = 'black'
-root.attributes("-alpha", 0.95)   # 设置整个窗体的透明度
-# root.attributes("-fullscreen", True)  # 全屏
-# root.attributes("-topmost", True)  # 所有窗口中处于最顶层, 失焦也还是在最顶层
-# root.overrideredirect(True), 取消标题栏, 但mac下设置了好像也不正常
+def main():
+    root = Tk()
+    root.title("Stop Watch")
+    root.geometry("370x600+600+150")  # 后面的padx和pady是相对于屏幕的位置
+    # root.iconbitmap("img/watch.ico") # mac下设置没用
+    # root['background'] = 'black'
+    root.attributes("-alpha", 0.95)  # 设置整个窗体的透明度
+    # root.attributes("-fullscreen", True)  # 全屏
+    # root.attributes("-topmost", True)  # 所有窗口中处于最顶层, 失焦也还是在最顶层
+    # root.overrideredirect(True) # 取消标题栏, 但mac下设置了好像也不正常
+    root.resizable(width=False, height=False)  # 不让调整大小
 
-sw = StopWatch(root)
-sw.start()
-root.mainloop()
+    # quit终止所有tkinter应用程序, 范围不可控, 用destroy只终止本程序
+    # 这里退出好像不能直接写root.destroy, 只能写成这种形式
+    root.bind("<Escape>", lambda x:root.destroy())
+
+    sw = StopWatch(root)
+    sw.start()
+    root.mainloop()
+
+if __name__ == "__main__":
+    main()
 
 
 
