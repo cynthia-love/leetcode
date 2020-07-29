@@ -73,6 +73,7 @@ def main():
     var_day = None
     var_day_base = None
 
+    argv_l_today = None
     for i in range(len(argv)):
         if argv[i] == '-l' and argv[i + 1:]:
             s = argv[i + 1]
@@ -170,8 +171,7 @@ def main():
             if match(r"\d{4}-\d{2}-\d{2}", s):
                 var_day = s
                 if var_day == t2s(now)[:10]:
-                    print("-cd不可指定当日!")
-                    return
+                    argv_l_today = now.time().hour*60+now.time().minute
             else:
                 print("无效的待比较日期！")
                 return
@@ -414,7 +414,7 @@ def main():
             apis = set(
                 [x[0] for x in sorted(dict_time_data.values(), key=lambda item: item[2], reverse=True) if x[0] in apis][:isprime])
 
-    sum1 = sum([x[2] for x in dict_time_data.values()]) / argv_l
+    sum1 = sum([x[2] for x in dict_time_data.values()]) / (argv_l_today or argv_l)
     sum2 = sum([x[2] for x in dict_base_data.values()]) / argv_l
     print("分析时段全部接口分均交易量: {:.2f}, 对应基准时段分均交易量: {:.2f}, 增加: {:.2%}".format(sum1, sum2, (sum1 - sum2) / sum2))
 
@@ -422,7 +422,7 @@ def main():
         # and dict_time_data[x][2]>= argv_l * min_freq是为了加上-f过滤
         # 感觉-s -e -i -f还是写的有点乱, 到底该怎么写, 设置一个apis_filter, 四个参数来一遍? 得到最终的apis_filter之后再统计交易量什么的
         # 初始apis_filter取全量api, 一遍遍筛
-        sum1 = sum([dict_time_data[x][2] for x in dict_time_data if x in apis and dict_time_data[x][2]>= argv_l * min_freq]) / argv_l
+        sum1 = sum([dict_time_data[x][2] for x in dict_time_data if x in apis and dict_time_data[x][2]>= (argv_l_today or argv_l) * min_freq]) / (argv_l_today or argv_l)
         sum2 = sum([dict_base_data[x][2] for x in dict_base_data if x in apis and x in dict_time_data and dict_time_data[x][2]>= argv_l * min_freq]) / argv_l
 
         if sum2 == 0:
@@ -438,15 +438,16 @@ def main():
     先不和基准比, 单独分析当前时点情况
     """
 
-    def filter_map(dic, index, reverse=False, isapi=True, ismix=True):
+    def filter_map(dic, index, reverse=False, isapi=True, ismix=True, argv_l=argv_l):
         v_dic_filter = list(filter(lambda x: x[2] >= argv_l * min_freq and x[0] not in apis_e
                                              and (not isapi or x[0] in apis if apis else True), dic.values()))
         return sorted(v_dic_filter, key=lambda x: abs(x[index]) if ismix else x[index], reverse=reverse)
 
     # v_time_host_succ_order, v_time_host_dura_order = filter_map(dict_time_host, 5, isapi=False), filter_map(dict_time_host, 6, True, isapi=False)
 
-    v_time_data_freq_order = filter_map(dict_time_data, 2, True)
-    v_time_data_succ_order, v_time_data_dura_order = filter_map(dict_time_data, 5), filter_map(dict_time_data, 6, True)
+    v_time_data_freq_order = filter_map(dict_time_data, 2, True, argv_l=(argv_l_today or argv_l))
+    v_time_data_succ_order, v_time_data_dura_order = \
+        filter_map(dict_time_data, 5, argv_l=(argv_l_today or argv_l)), filter_map(dict_time_data, 6, True, argv_l=(argv_l_today or argv_l))
 
     print("**********************************************************************************************************")
     """
@@ -476,8 +477,8 @@ def main():
         base = dict_base_data[item[0]] if item[0] in dict_base_data else []
         res = []
         res.append('*' + item[0] if item[0] in apis else item[0])
-        res.append("{:.2f}".format(item[2] / argv_l))
-        res.append("{:.2f}".format(base[2] / argv_l) if base else "-")
+        res.append("{:.2f}".format(item[2] / (argv_l_today or argv_l)))
+        res.append("{:.2f}".format(base[2] / (argv_l_today or argv_l)) if base else "-")
         res.append("{:.2%}".format(item[5]))
         res.append("{:.2%}".format(base[5]) if base else "-")
         res.append("{:.2f}".format(item[6]))
@@ -502,8 +503,8 @@ def main():
         base = dict_base_data[item[0]] if item[0] in dict_base_data else []
         res = []
         res.append('*' + item[0] if item[0] in apis else item[0])
-        res.append("{:.2f}".format(item[2] / argv_l))
-        res.append("{:.2f}".format(base[2] / argv_l) if base else "-")
+        res.append("{:.2f}".format(item[2] / (argv_l_today or argv_l)))
+        res.append("{:.2f}".format(base[2] / (argv_l_today or argv_l)) if base else "-")
         res.append("{:.2%}".format(item[5]))
         res.append("{:.2%}".format(base[5]) if base else "-")
         res.append("{:.2f}".format(item[6]))
@@ -531,8 +532,8 @@ def main():
 
         res = []
         res.append('*' + item[0] if item[0] in apis else item[0])
-        res.append("{:.2f}".format(item[2] / argv_l))
-        res.append("{:.2f}".format(base[2] / argv_l) if base else "-")
+        res.append("{:.2f}".format(item[2] / (argv_l_today or argv_l)))
+        res.append("{:.2f}".format(base[2] / (argv_l_today or argv_l)) if base else "-")
         res.append("{:.2%}".format(item[5]))
         res.append("{:.2%}".format(base[5]) if base else "-")
         res.append("{:.2f}".format(item[6]))
@@ -555,8 +556,8 @@ def main():
 
         res = []
         res.append('*' + item[0] if item[0] in apis else item[0])
-        res.append("{:.2f}".format(item[2] / argv_l))
-        res.append("{:.2f}".format(base[2] / argv_l) if base else "-")
+        res.append("{:.2f}".format(item[2] / (argv_l_today or argv_l)))
+        res.append("{:.2f}".format(base[2] / (argv_l_today or argv_l)) if base else "-")
         res.append("{:.2%}".format(item[5]))
         res.append("{:.2%}".format(base[5]) if base else "-")
         res.append("{:.2f}".format(item[6]))
@@ -625,7 +626,7 @@ def main():
                 item = l[i]
                 print(
                     "{:<{width}}{:<12.2f}{:<12.2f}{:<18.2%}{:<12.2f}{:<12.2f}{:<18.2%}{:<12.2f}{:<12.2f}{:<18.2%}".format(
-                        '*' + item[0] if item[0] in apis else item[0], item[2] / argv_l, item[7] / argv_l, item[9],
+                        '*' + item[0] if item[0] in apis else item[0], item[2] / (argv_l_today or argv_l), item[7] / argv_l, item[9],
                                                                        100 * item[5], 100 * item[10],
                         item[11], item[6], item[13], item[15], width=len_trancode))
         elif order == 2:
@@ -637,7 +638,7 @@ def main():
                 print(
                     "{:<{width}}{:<12.2f}{:<12.2f}{:<18.2%}{:<12.2f}{:<12.2f}{:<18.2%}{:<12.2f}{:<12.2f}{:<18.2%}".format(
                         '*' + item[0] if item[0] in apis else item[0], 100 * item[5], 100 * item[10],
-                        item[11], item[2] / argv_l, item[7] / argv_l, item[9], item[6], item[13], item[15], width=len_trancode))
+                        item[11], item[2] / (argv_l_today or argv_l), item[7] / argv_l, item[9], item[6], item[13], item[15], width=len_trancode))
         elif order == 3:
             print("{:<{width}}{:<12}{:<12}{:<18}{:<12}{:<12}{:<18}{:<12}{:<12}{:<18}".format(
                 "TranCode", "Duration", "Base", "CHANGE", "Frequency", "Base", "CHANGE", "Success", 'Base', 'CHANGE',
@@ -647,7 +648,7 @@ def main():
                 print(
                     "{:<{width}}{:<12.2f}{:<12.2f}{:<18.2%}{:<12.2f}{:<12.2f}{:<18.2%}{:<12.2f}{:<12.2f}{:<18.2%}".format(
                         '*' + item[0] if item[0] in apis else item[0], item[6], item[13], item[15],
-                        item[2] / argv_l, item[7] / argv_l, item[9], 100 * item[5], 100 * item[10],
+                        item[2] / (argv_l_today or argv_l), item[7] / argv_l, item[9], 100 * item[5], 100 * item[10],
                         item[11], width=len_trancode))
 
     print("**********************************************************************************************************")
@@ -683,17 +684,20 @@ def main():
                     for key in dict_time_data_back:
                         if key.upper() == pin:
                             trancode = key
-                            api_freq = dict_time_data_back[key][2]/argv_l
+                            api_freq = dict_time_data_back[key][2]/(argv_l_today or argv_l)
                             api_surate = dict_time_data_back[key][5]
                             api_dura = dict_time_data_back[key][6]
                             print(spaces + "接口描述: " + dict_time_data_back[key][1])
                             print("")
 
+                    flag2 = False
                     for key, value in h5_api_all.items():
                         r = re.search(r"\b{}\b".format(pin), value['api'], re.IGNORECASE)
                         if r:
                             trancode = r.group()
                             print(spaces + "涉及页面: " + key + ": " + value['des'])
+                            flag2 = True
+                    if flag2: print("")
 
                     if not trancode:
                         print(spaces+"未检索到相关信息, 请检查接口编号!")
@@ -822,7 +826,7 @@ def main():
                     if len(time_plot) < 10 or len(base_plot) < 10:
                         print("频次过低, 绘制失败!")
                         continue
-                    print("绘制成功!")
+
                     with open(getpath("plot.pickle"), "wb") as f:
                         pickle_dump([time_plot, base_plot], f)
                     # os.system("start /b python imms_draw.py")
@@ -832,7 +836,42 @@ def main():
                     # os.popen返回脚本执行的输出内容
                     # 不过用os.popen试了下, terminal里还是会打印东西...
                     # 得用1>nul, 2>nul重定向, 1表示标准输出, 2表示标准错误, 标准指cmd窗口, nul表示空设备
-                    os.system("start /b imms_draw -trancode {} -cd {} -td {} 1>nul 2>nul".format(trancode, time_end[:10], base_end[:10]))
+
+                    if path[0].endswith(".zip"):
+                        os.system("start /b imms_draw -trancode {} -cd {} -td {} 1>nul 2>nul".format(trancode, time_end[:10], base_end[:10]))
+                    else:
+                        os.system("start /b python imms_draw.py -trancode {} -cd {} -td {} 1>nul 2>nul".format(trancode, time_end[:10], base_end[:10]))
+                    print("绘制成功!\n")
+
+                    # 画完图, 打印自基准日到分析日的所有日统计:
+                    tmp_day_start = datetime.strptime(base_end[:10], "%Y-%m-%d")-timedelta(days=3)
+                    tmp_day_end = datetime.strptime(time_end[:10], "%Y-%m-%d")
+
+                    list_day = []
+                    tmp_day = tmp_day_start
+
+                    tmp_now = datetime.now().time()
+                    tmp_argv_l = tmp_now.hour*60+tmp_now.minute
+                    while tmp_day <= tmp_day_end:
+                        try:
+                            tmp_day_str = datetime.strftime(tmp_day, "%Y-%m-%d")
+                            tmp_api = pull(login_name, userAuthSession, base_url, tmp_day_str, tmp_day_str, "transCode", trancode, time_type=2)
+                            # tmp_api不为空时才去extend
+                            if tmp_api:
+                                list_day.extend([(
+                                    datetime.strptime(x['tradeDate'], "%Y-%m-%d"),
+                                    float(x['tradeCount'])/(tmp_argv_l if tmp_day.date() == now.date() else 24*60),
+                                    float(x['successRate']) / 100,
+                                    float(x['avgTime'])
+                                ) for x in tmp_api])
+                        except:
+                            pass
+                        tmp_day += timedelta(days=1)
+                    if list_day:
+                        print("基准日前三天至分析日当天全天统计量变化情况如下: ")
+                        print(spaces+"{:<12}{:<12}{:<12}{:<12}".format("Date", "Frequency", "Success", "Duration"))
+                        for each in list_day:
+                            print(spaces+"{:<12}{:<12.2f}{:<12.2%}{:<12.2f}".format(each[0].strftime("%m-%d"), each[1], each[2], each[3]))
 
     thread = PrintDes()
     thread.setDaemon(False)

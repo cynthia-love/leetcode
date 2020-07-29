@@ -9,7 +9,7 @@
     为了用该方法, 这里自定义类需要继承Frame
 
     梳理功能点:
-    1. 初始进去, 秒表显示00:00:00, 分别代表分钟, 秒, 百分秒
+    1. 初始进去, 秒表显示00:00.00, 分别代表分钟, 秒, 百分秒
     下方两个按钮, 计次和启动, 初始计次不能点, 再下方展示所有计次的时间, 初始为空
     2. 点了启动, 计次按钮可点, 启动按钮变成停止, 此时点计次, 下方打印所有计次时间点
     3. 点暂停, 此时计次按钮变复位, 暂停按钮变启动, 点复位回到初始状态, 点启动, 继续计时
@@ -17,8 +17,9 @@
     INIT, RUN, PAUSE
 """
 from tkinter import *
-from tkinter import ttk  # 为什么上面的*引入不进来
+from tkinter import ttk, StringVar  # 为什么上面的*引入不进来
 from datetime import datetime
+from typing import Dict, Union
 
 INIT, RUN, PAUSE = 1, 2, 3
 
@@ -28,84 +29,113 @@ class StopWatch(Frame):
 
         Frame.__init__(self, parent)
         self.delay = 50  # after函数多久以后执行, 单位ms
+
         self.stage = INIT
-
-        self.base = None  # 基准时间
-        self.time = None  # 已持续时间, 单位秒, 带小数
-
-        # 设置三个变量, 文本, 左右按钮名
-        self.text = StringVar()
-        self.text_button1 = StringVar()
-        self.text_button2 = StringVar()
-
-        self.timer = None  # after定时器
-
-        self.init()  # 初始化变量值
-        # 注意有一点, pygame重新开始可以直接main(), tkinter不行, 还是得手动去重置变量值
+        # 各种变量, 可以都放到state里便于管理
+        self.state = {
+            # INIT阶段要用到的
+            "text": StringVar(),
+            # RUN阶段新用到的, 这俩只有阶段转换的时候才能设置值, 所以没法在init里设置
+            "time": None,
+            "base": None,
+            "timer": None
+        }
 
         # 画页面
         # 注意, tkinter只能设置窗体整体的透明度, 不支持设置组件bg属性透明, 但好像会继承窗体的透明度
-        self.label = Label(parent, textvariable=self.text, fg="black", font=("黑体", 66))
+        self.label = Label(parent, textvariable=self.state['text'], fg="black", font=("黑体", 66))
         self.label.place(relx=0.5, rely=0.25, anchor=CENTER)
 
-        # 苹果电脑下button的bg属性好像没有效果....这是逼我用canvas吗, 先不管样式, 先做实现功能
-        self.button1 = Button(parent, textvariable=self.text_button1, fg='grey', bg='black',
-               font=("黑体", 30), relief=RAISED, command=self.f1)
+        # 苹果电脑下button的bg属性好像没有效果....relief属性也没有效果...
+        self.button1 = Button(parent, fg='black', bg='black', font=("黑体", 30), relief=FLAT, command=self.f1, width=5)
         self.button1.place(relx=0.14, rely=0.5, anchor=SW)
 
-        self.button2 = Button(parent, textvariable=self.text_button2, fg='green', bg='black',
-               font=("黑体", 30), relief=RAISED, command=self.f2)
+        # button2的fg老变, 就不在这里设置了
+        self.button2 = Button(parent,  bg='black', font=("黑体", 30), relief=RAISED, command=self.f2, width=5)
         self.button2.place(relx=0.86, rely=0.5, anchor=SE)
 
         # Listbox和Scrollbar要包起来, 不然滚动条会超出Listbox范围
         frame = Frame(parent)
         frame.place(relx=0, rely=0.55, anchor=NW, relwidth=1.0, relheight=0.45)
+
         self.list = Listbox(frame, bd=0, font=("黑体", 18))  # 后面有expand和fill, 就别设置宽高了
         # expand是否自动扩展, fill扩展方向, 俩参数关系没明白, 比如sb就不能指定expand
         self.list.pack(side=LEFT, expand=YES, fill=BOTH)  # fill好像是拖动的时候才有用吧
+
         sb = Scrollbar(frame)
         sb.pack(side=RIGHT, fill=Y)
 
         self.list.config(yscrollcommand=sb.set)
         sb.config(command=self.list.yview)
 
-    def init(self):
-        self.time = 0
-
-        self.text.set("00:00:00")
-        self.text_button1.set("计次")
-        self.text_button2.set("启动")
+        # 初始化INIT阶段变量值
+        self.state["text"].set("00:00.00")
+        # 左右按钮就四个量变, 干脆每次阶段转换都全量赋这几个值, 逻辑更清晰, 对折UI就很好写
+        self.button1.config(text="计次", state=DISABLED)
+        self.button2.config(text="启动", fg='lime')
 
     def f1(self):
-        self.list.insert(0, "{:<6}计次{:<17}{}".format("", self.list.size()+1, self.text.get()))
+        if self.stage == INIT:
+            # INIT阶段左键不可点
+            pass
+        elif self.stage == RUN:
+            # RUN阶段左键是计次, 点了计次
+            self.list.insert(0, "{:<6}计次{:<17}{}".format("", self.list.size()+1, self.state['text'].get()))
+        elif self.stage == PAUSE:
+            # PAUSE阶段左键是复位, 点了回到INIT状态
+            self.stage = INIT
+            self.state["text"].set("00:00.00")
+            self.button1.config(text="计次", state=DISABLED)
+            self.button2.config(text="启动", fg='lime')
+
+            # PAUSE复位比最开始INIT多了个清空列表
+            self.list.delete(0, END)
 
     def f2(self):
-        self.list.delete(0, END)
+        if self.stage == INIT:
+            # INIT阶段右键是绿色的启动, 点了进到RUN阶段
+            self.stage = RUN
+            # INIT状态点击右键, 启动, 先修改INIT阶段的老变量
+            self.button1.config(text="计次", state=NORMAL)
+            self.button2.config(text="暂停", fg='red')
+            # 再初始化RUN阶段的变量, INIT-RUN, 要重置time为0以及赋base初值
+            self.state['time'] = 0
+            self.state['base'] = datetime.now()
+            self.update()
 
+        elif self.stage == RUN:
+            # RUN阶段右键是红色暂停, 点了进到PAUSE阶段, 此时取消执行update
+            self.stage = PAUSE
+            # RUN阶段点击右键, 暂停, 先改按钮
+            self.button1.config(text="复位", state=NORMAL)
+            self.button2.config(text="继续", fg='lime')
+            # 再取消after, base暂时不改, 继续的时候才更新base
+            self.after_cancel(self.state['timer'])
+
+        elif self.stage == PAUSE:
+            # PAUSE阶段右键是绿色继续, 点了进到RUN阶段, 已计time不动, 重置base, 重新调update
+            self.stage = RUN
+            self.button1.config(text="计次", state=NORMAL)
+            self.button2.config(text="暂停", fg='red')
+            self.state['base'] = datetime.now()
+            self.update()
+
+    def update(self):
+        now = datetime.now()
+        self.state['time'] += (now-self.state['base']).total_seconds()
+        self.state['text'].set(self.t2s(self.state['time']))
+        self.state['base'] = now
+
+        self.state['timer'] = self.after(self.delay, self.update)
 
     def t2s(self, t):
         # t存的是带小数的秒
         # 灵活利用多级嵌套format
-        return "{}:{}:{}".format(
+        return "{}:{}.{}".format(
             "{:0>2d}".format(int(t // 60)),
             "{:0>2d}".format(int(t % 60)),
             "{:0>2d}".format(int(t % 1 * 100 // 1))
         )
-
-
-    def start(self):
-        self.base = datetime.now()
-        self.update()
-        self.stage = RUN
-
-    def update(self):
-        now = datetime.now()
-        self.time += (now-self.base).total_seconds()
-        self.base = now
-
-        self.text.set(self.t2s(self.time))
-        self.timer = self.after(self.delay, self.update)
-
 
 def main():
     root = Tk()
@@ -124,7 +154,6 @@ def main():
     root.bind("<Escape>", lambda x:root.destroy())
 
     sw = StopWatch(root)
-    sw.start()
     root.mainloop()
 
 if __name__ == "__main__":

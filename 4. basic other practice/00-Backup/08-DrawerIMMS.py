@@ -49,6 +49,8 @@ plt.gca().xaxis.set_major_formatter(dates.DateFormatter("%H:%M"))
 plt.gca().xaxis.set_major_locator(dates.HourLocator(byhour=None, interval=2))
 # 设置横坐标上下限; 还有个函数plt.axis([xmin, xmax, ymin, ymax])一次把横纵坐标都设置了
 plt.xlim(datetime(1900, 1, 1, hour=0, minute=0), datetime(1900, 1, 2, hour=0, minute=0))
+plt.ylim(bottom=0.0)
+
 
 plt.subplot(312)
 plt.plot([e[0] for e in present], [e[2] for e in present], color='lime', label=date_present)
@@ -66,7 +68,7 @@ plt.xlim(datetime(1900, 1, 1, hour=0, minute=0), datetime(1900, 1, 2, hour=0, mi
 
 # 成功率比较特殊, 纵坐标也得特殊处理
 plt.gca().yaxis.set_major_formatter(ticker.FuncFormatter(lambda x, pos: "{:.0%}".format(x)))
-plt.ylim(bottom=0.0)  # 可以只设置下限bottom, 也可以加上上限top
+plt.ylim(bottom=-0.05, top=1.05)  # 可以只设置下限bottom, 也可以加上上限top
 
 plt.subplot(313)
 plt.plot([e[0] for e in present], [e[3] for e in present], color='lime', label=date_present)
@@ -81,12 +83,10 @@ plt.gca().xaxis.set_major_formatter(dates.DateFormatter("%H:%M"))
 plt.gca().xaxis.set_major_locator(dates.HourLocator(byhour=None, interval=2))
 # 设置横坐标上下限; 还有个函数plt.axis([xmin, xmax, ymin, ymax])一次把横纵坐标都设置了
 plt.xlim(datetime(1900, 1, 1, hour=0, minute=0), datetime(1900, 1, 2, hour=0, minute=0))
-
+plt.ylim(bottom=0.0)
 
 # plt.gcf().autofmt_xdate()
 # 好像加了这句话会把三个子图的横坐标合成一个, 如果不加这句, 那么set_major_formatter什么的得每个子图下执行一次
 # 这里的f应该是figure的简写
-
-
 
 plt.show()
