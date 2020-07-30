@@ -43,11 +43,13 @@ os.rename("data", "data")
 print(os.name)  # 指代当前使用的操作系统
 
 # os.system()用于执行一些命令
-os.system("ls")
+os.system("ls")  # 4. basic other practice/00-Backup/08-CrawlerIMMS.py里有实际应用, 包括异步, 屏蔽标准输出等
 # os.system("python solution-1.py")
 
-# 递归遍历, 深度优先返回(路径, [包含目录], [包含文件])
-print(list(os.walk("dir")))
+# 递归遍历, 自顶向底返回(路径, [包含目录], [包含文件])
+print(list(os.walk("~/leetcode")))
+# 4. basic other practice/00-Backup/08-ScanProjectH5.py里有具体应用
+# 可以指定topdown=False改为自底向顶
 
 # ******************************************************************
 # 相对于os, os.path模块更专业地去处理path(大部分其实可以直接通过字符串操作实现)
@@ -55,7 +57,7 @@ from os import path
 print(path.dirname("aaa/aaa/aaaa.txt"))  # 可以是不存在的目录, 返回最后一个/前面的目录, aaa/aaa
 print(path.basename("aaa/aaa/aaaa.txt"))  # 可以是不存在的目录, 直接返回最后一个/后面的字符串, aaaa.txt
 print(path.split("aaa/aaa/aaaa.txt"))  # 上面两个操作的合体, 不带/
-print(path.splitext("aaa/aaa/aaaa.txt")) # 按最后一个.而不是/拆分, 扩展名带.
+print(path.splitext("aaa/aaa/aaaa.txt")) # 按最后一个.而不是/拆分, 目的是拿文件格式, 扩展名带.
 print(path.join("aaa", "bbb", "ccc"))  # 无非拿/拼到了一起而已, aaa\bbb\ccc
 
 # 拿到目录/文件的基本信息
@@ -67,7 +69,7 @@ import time
 print(time.localtime(path.getmtime("data")))  # 转换成time.struct_time类型
 
 # 是否判断
-print(path.exists("data/data.txt"))  # 是否是目录或文件
+print(path.exists("data/data.txt"))  # 是否存在, 不管是目录还是文件
 print(path.isdir("data"))  # 是否是目录
 print(path.isfile("data/data.txt"))  # 是否是文件
 print(path.isabs("data"))  # 是否是绝对路径

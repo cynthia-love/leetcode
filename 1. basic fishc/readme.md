@@ -34,6 +34,9 @@
 - [字典](chapter%2007/solution-1.py)
 - [集合](chapter%2007/solution-2.py)
 ##### chapter 08: 永久存储
+- [文件](chapter%2008/solution-1.py)
+- [os和os.path](chapter%2008/solution-2.py)
+- [万能的pickle](chapter%2008/solution-3.py)
 ##### chapter 09: 异常处理
 ##### chapter 10: 图形用户界面入门
 ##### chapter 11: 类和对象

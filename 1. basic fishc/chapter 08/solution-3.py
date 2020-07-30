@@ -18,5 +18,18 @@ with open("data/data.pickle", "wb") as f:
     pickle.dump(x, f)
 
 with open("data/data.pickle", "rb") as f:
-    m = pickle.load(f)
+    s = f.read()
+    print(pickle.loads(s))
+
+    f.seek(0, 0)
+    m = pickle.load(f)  # pickle.load等价于先读取二进制流, 再用loads把二进制流转回对象
     print(m, type(m))
+
+ps = pickle.dumps([{"a":1, "b":2}, 8])
+print(ps)
+
+d, i = pickle.loads(ps)
+print(d, i)
+
+# 即pickle除了把对象转成二进制流持久化到文件, 还能仅仅转成二进制流, 不存在文件
+# 并提供灵活的dump和dumps从文件中载入对象, 和将二进制流翻译回对象

@@ -1,4 +1,5 @@
 
+import os
 
-x = "abc"
-print("".join([e+"m" for e in x]))
+for root, dirs, file in os.walk(".", topdown=False):
+    print(root)
