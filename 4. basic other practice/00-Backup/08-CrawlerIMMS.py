@@ -282,6 +282,9 @@ def main():
         }
 
         try:
+            # 这里session.post还可以指定headers, 格式dict(), 以及cookies, 格式requests.cookies.RequestsCookieJar()
+            # 另外, data=json_dumps(params)等价于json=params, 即参数为json时有两种传参方式
+            # 包括返回值, 也自带.json()方法, 不用再用json包去loads
             return json_loads(session.post(login_url, json_dumps(params)).text)['RSP_BODY']['userAuthToken']
         except:
             print("登陆失败！请检查网络设置或重新配置登录信息：-n 用户名 -p 密码！")

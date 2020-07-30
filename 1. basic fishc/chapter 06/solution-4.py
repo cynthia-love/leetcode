@@ -40,9 +40,13 @@ dd = {"a":1, "b": 2, "c": 3, "d": 4, "e": 5}
 print({k: v+1 for k, v in dd.items() if v > 2})  # 字典推导只能实现filter和普通map, 无法条件map
 print(dict([(k, v+1) if v < 4 else (k, v+100) for k, v in dd.items() if v > 2]))
 # 字典推导不能直接实现条件map, 主要是:不好处理, 可以借助dict([(k, v)]过渡一下, 实现filter+条件map
+# !!! 经进一步研究, 其实是支持的, 只不过写法比较特殊, k和v的条件map是:隔开的
+print({(k+"hahah" if k == "d" else k):(v+1 if v >= 4 else 8) for k,v in dd.items() if k!='e' and v >= 3})
+# 好好研究这句话的写法, 当然:前后的俩括号都是可以省略的, 加上格式更清晰些
+# {key值条件map:value值条件map for key,value in dict.items() if key值条件 and/or value值条件}
 
 # 字符串没有推导式
-# 元组也没有
+# 元组也没有, 不过其可以作为in的对象, 得到list后再通过join(), set()等转成字符串, 元组
 tt = (1, 2, 3, 4, 5)
 print((x for x in tt))  # 得到的并不是个元组, 而是个generator
 print(x for x in tt)  # 和上面输出一样, 说明()并不是必须
@@ -55,3 +59,7 @@ print(list(x for x in tt))  # 这里也没啥必要, 直接list(tt)不行吗
 print(list(x+1 if x < 4 else x+100 for x in tt if x >2))
 ss = sum(x+1 if x < 4 else x+100 for x in tt if x > 2)
 print(ss)
+# 其实由这里可以看出来, 前面的列表, 集合, 字典推导式其实内部得到是一个generator
+# 然后用[], {}, {}去强制转化成了list, set, dict
+# [x for x in tt]等价于list(x for x in tt), 即[]等价于list()
+# 即[generator], list(generator)

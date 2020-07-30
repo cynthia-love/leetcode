@@ -3,8 +3,12 @@
 
 """
     递归, 函数自己调自己
-    默认情况下, Python限制递归层数最高100
+    网上说Python默认递归层数最高998
+    但试了下有些五六千好像也没问题, 有些几十就不行了, 和复杂度有关系?
 """
+import sys
+sys.setrecursionlimit(1000000)
+# 说是可以这么手工设置最大递归深度, 但好像没啥用, 该跑不出来还是出不来
 
 # 阶乘
 def f1(x: int):
@@ -18,7 +22,7 @@ print(f1(5))
 def r_f1(x: int):
     if x == 1: return 1
     return x*r_f1(x-1)
-print(f1(5))
+print(f1(5000))
 
 # 斐波那契数列
 def r_f2(x: int):
@@ -27,7 +31,7 @@ def r_f2(x: int):
     # if x == 1 or x == 2: return 1
     if x in [1, 2]: return 1
     return r_f2(x-1)+r_f2(x-2)
-print(r_f2(12))
+print(r_f2(20))
 
 # 汉诺塔, X, Y, Z 三根柱子, n个盘子
 """
