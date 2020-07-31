@@ -38,9 +38,21 @@
 - [os和os.path](chapter%2008/solution-2.py)
 - [万能的pickle](chapter%2008/solution-3.py)
 ##### chapter 09: 异常处理
+- [常见异常种类](chapter%2009/solution-1.py)
+- [if/for/while/try+else](chapter%2009/solution-2.py)
+- [with语句](chapter%2009/solution-3.py)
 ##### chapter 10: 图形用户界面入门
+- [easygui入门](chapter%2010/solution-1.py)
+- [选水果小游戏](chapter%2010/solution-2.py)
 ##### chapter 11: 类和对象
+- [入门1](chapter%2011/solution-1.py)
+- [入门2](chapter%2011/solution-2.py)
+- [继承(全局-函数/类-实例/父类-子类)](chapter%2011/solution-3.py)
+- [多重继承](chapter%2011/solution-4.py)
+- [组合(把类作为数据类型使)](chapter%2011/solution-5.py)
+- [Mixin(重要, 给dict添加.访问和给class添加[]访问)](chapter%2011/solution-6.py)
 ##### chapter 12: 魔法方法
+
 ##### chapter 13: 模块
 ##### chapter 14: 论一只爬虫的自我修养
 ##### chapter 15: GUI的最终选择: Tkinter

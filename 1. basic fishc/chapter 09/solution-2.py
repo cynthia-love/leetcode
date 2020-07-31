@@ -20,6 +20,12 @@ else:
     print("循环正常执行完才会执行这里, break的不会")  # 利用这个特性可以优化一些代码逻辑
     print("找不到")
 
+# 比如判断列表里的都大于0?
+for i in [1, 2, 3, 4]:
+    if i <= 0: break
+else:
+    print(True)
+
 # while-else
 index = 1
 while index <= 100:

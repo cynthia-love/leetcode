@@ -3,6 +3,7 @@
 
 """
     一个简单的例子
+    了解即可, 后面有更好用的tkinter
 """
 import sys
 import easygui as eg

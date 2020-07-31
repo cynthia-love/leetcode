@@ -47,5 +47,6 @@ class Ball2:
 b = Ball2()
 b.printInfo()
 # print(Ball2.__name)
-# print(b.__age), 这两行都不能执行的, 要访问只能内部访问
+# print(b.__age)
+# 这两行都不能执行的, 要访问只能内部访问
 
