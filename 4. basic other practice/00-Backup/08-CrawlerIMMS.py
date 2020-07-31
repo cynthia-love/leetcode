@@ -8,6 +8,7 @@ import re
 import os
 import sys
 import copy
+import time as timesleep
 from numpy import mean, std, median, argpartition
 from os import system
 from threading import Thread
@@ -39,7 +40,7 @@ def s2t(s):
 
 
 def main():
-    session, base_url = Session(), "http://xxx.xxx.xxx.xxx:xxxx"
+    session, base_url = Session(), "http://182.218.155.29:8081"
 
     # 处理用户输入, 示例:　python imms.py -worse -c "2020-06-29 06:00"
     print("**********************************************************************************************************")
@@ -282,9 +283,6 @@ def main():
         }
 
         try:
-            # 这里session.post还可以指定headers, 格式dict(), 以及cookies, 格式requests.cookies.RequestsCookieJar()
-            # 另外, data=json_dumps(params)等价于json=params, 即参数为json时有两种传参方式
-            # 包括返回值, 也自带.json()方法, 不用再用json包去loads
             return json_loads(session.post(login_url, json_dumps(params)).text)['RSP_BODY']['userAuthToken']
         except:
             print("登陆失败！请检查网络设置或重新配置登录信息：-n 用户名 -p 密码！")
@@ -333,13 +331,19 @@ def main():
         print("拉取成功!")
     else:  # 否则一分钟一分钟拉
         time_data, base_data = [], []
+        thread_list1, thread_list2 = [], []  # 这里设置线程list因为必须最后统一设置join, 不能一个个start+join
 
         count = 0
         # 先拉当前
         time = s2t(time_start)
         while time <= s2t(time_end):
-            res = pull(login_name, userAuthSession, base_url, t2s(time), t2s(time), "transCode", time_type=2 if var_day else 4)
-            if res: time_data.extend(res)
+            # res = pull(login_name, userAuthSession, base_url, t2s(time), t2s(time), "transCode", time_type=2 if var_day else 4)
+            # if res: time_data.extend(res)
+            thread = Thread(target=lambda:time_data.extend(
+                pull(login_name, userAuthSession, base_url, t2s(time), t2s(time), "transCode", time_type=2 if var_day else 4) or []))
+            thread_list1.append(thread)
+            thread.start()
+
             time += timedelta(minutes=1)
             count += 1
             if count == int(2*argv_l*0.1):
@@ -353,17 +357,29 @@ def main():
             elif count == int(2*argv_l*0.5):
                 print("50%...", end="", flush=True)
 
-        if not time_data:
-            print("拉取失败！请检查网络或时间设置！")
-            exit(1)
+            timesleep.sleep(0.03)
+            # 后面的按日拉取和拉两天的可以设置0.05, 因为最高同时发48个请求, 而这里如果设置0.05, 假如-l参数很大
+            # 很有可能之前的请求还没回来, 导致同时发出去的请求超过了系统所能承受的最大量, 建议把一半的join提到前面来
+            # 当然, 如果-l继续增大还是有问题, 建议不要超过120
 
-        # 在拉基准
+        for thread in thread_list1:
+            thread.join()
+
+        # 再拉基准
         time = s2t(base_start)
         while time <= s2t(base_end):
-            res = pull(login_name, userAuthSession, base_url, t2s(time), t2s(time), "transCode", time_type=2 if var_day else 4)
-            if res: base_data.extend(res)
+            # res = pull(login_name, userAuthSession, base_url, t2s(time), t2s(time), "transCode", time_type=2 if var_day else 4)
+            # if res: base_data.extend(res)
+
+            # pull是实时的, start的时候就去执行了, 所以虽然time是全局变量, 不需要传参; 如果是接口调用回来后才用time, 那就得传参了, 不然等用的时候time值就变了
+            thread = Thread(target=lambda: base_data.extend(
+                pull(login_name, userAuthSession, base_url, t2s(time), t2s(time), "transCode", time_type=2 if var_day else 4) or []))
+            thread_list2.append(thread)
+            thread.start()
+
             time += timedelta(minutes=1)
             count += 1
+
             if count == int(2*argv_l*0.6):
                 print("60%...", end="", flush=True)
             elif count == int(2*argv_l*0.7):
@@ -375,8 +391,13 @@ def main():
             elif count == int(2*argv_l*1.0):
                 print("100%...", end="", flush=True)
 
-        if not base_data:
-            print("拉取失败！请检查网络或参数设置！")
+            timesleep.sleep(0.03)
+
+        for thread in thread_list2:
+            thread.join()
+
+        if not time_data or not base_data:
+            print("拉取失败！请检查网络或时间设置！")
             exit(1)
 
     print("拉取成功!")
@@ -675,7 +696,9 @@ def main():
             spaces = "                                                "
             while True:
                 print("**********************************************************************************************************")
-                pin = input("输入接口编号查询接口中文描述, 输入q退出: ").upper().strip()
+                sin = input("输入接口编号查询接口中文描述, 输入q退出: ").upper().strip().split()
+                pin = sin[0]
+                draw = True  # 改成并发后, 够快, 没必要根据参数判断是否要画图了, 都画了吧
 
                 if pin == 'Q':
                     exit(0)
@@ -705,6 +728,64 @@ def main():
                     if not trancode:
                         print(spaces+"未检索到相关信息, 请检查接口编号!")
                         continue
+
+                    # 画完图, 打印自基准日到分析日的所有日统计:
+                    tmp_day_start = datetime.strptime(base_end[:10], "%Y-%m-%d")-timedelta(days=3)
+                    tmp_day_end = datetime.strptime(time_end[:10], "%Y-%m-%d")
+
+                    list_day = []
+                    tmp_day = tmp_day_start
+
+                    tmp_now = datetime.now().time()
+                    tmp_argv_l = tmp_now.hour*60+tmp_now.minute
+
+                    thread_list = []
+                    while tmp_day <= tmp_day_end:
+                        try:
+                            tmp_day_str = datetime.strftime(tmp_day, "%Y-%m-%d")
+
+                            # 这里要注意个问题, 前面的线程都是很简单的extend+pull就完了, pull能拿到实时参数, extend里没有参数
+                            # 但是这里, extend用到了tmp_day, 然而这个值是不断变的, 意味着extend的时候并不是pull时候的tmp_day值了
+                            # 所以这里需要用到线程初始传参; 线程传参支持args和kwargs两种方式
+                            thread = Thread(target=lambda tmp_day_thread: list_day.extend([(
+                                    datetime.strptime(x['tradeDate'], "%Y-%m-%d"),
+                                    float(x['tradeCount'])/(tmp_argv_l if tmp_day_thread.date() == now.date() else 24*60),
+                                    float(x['successRate']) / 100,
+                                    float(x['avgTime'])
+                                ) for x in pull(login_name, userAuthSession, base_url, tmp_day_str, tmp_day_str, "transCode", trancode, time_type=2)] or []), args=(tmp_day,))
+                            thread_list.append(thread)
+                            thread.start()
+
+                            """
+                            tmp_api = pull(login_name, userAuthSession, base_url, tmp_day_str, tmp_day_str, "transCode", trancode, time_type=2)
+                            # tmp_api不为空时才去extend
+                            if tmp_api:
+                                list_day.extend([(
+                                    datetime.strptime(x['tradeDate'], "%Y-%m-%d"),
+                                    float(x['tradeCount'])/(tmp_argv_l if tmp_day.date() == now.date() else 24*60),
+                                    float(x['successRate']) / 100,
+                                    float(x['avgTime'])
+                                ) for x in tmp_api])
+                            """
+
+                        except:
+                            pass
+                        tmp_day += timedelta(days=1)
+                        timesleep.sleep(0.05)
+
+                    for each in thread_list:
+                        each.join()
+
+                    if list_day:
+                        # 先排个序
+                        list_day.sort(key=lambda x:x[0])
+                        print("基准日前三天至分析日当天全天统计量变化情况如下: ")
+                        print(spaces+"{:<12}{:<12}{:<12}{:<12}".format("Date", "Frequency", "Success", "Duration"))
+                        for each in list_day:
+                            print(spaces+"{:<12}{:<12.2f}{:<12.2%}{:<12.2f}".format(each[0].strftime("%m-%d"), each[1], each[2], each[3]))
+
+                    if not draw: continue
+                    print("")
                     # 拉取基准日全天数据
                     api_day_start = datetime.strptime(base_end[:10], "%Y-%m-%d")
                     api_day_end = api_day_start+timedelta(minutes=59)
@@ -714,10 +795,26 @@ def main():
                     list_dura = []
 
                     base_plot = []
+                    thread_list1 = []
+
                     for i in range(24):
                         tmp_start = api_day_start.strftime("%Y-%m-%d %H:%M")
                         tmp_end = api_day_end.strftime("%Y-%m-%d %H:%M")
                         try:
+
+                            thread = Thread(target=lambda: base_plot.extend(
+                                [(
+                                    # 这里不能用.time()转成datetime.time格式, matplotlib不支持
+                                    datetime.strptime(x['tradeTime'], "%H:%M"),
+                                    float(x['tradeCount']),
+                                    float(x['successRate']) / 100,
+                                    float(x['avgTime'])
+                                ) for x in pull(login_name, userAuthSession, base_url, tmp_start, tmp_end, "transCode", trancode) or []]
+                            ))
+                            thread_list1.append(thread)
+                            thread.start()
+
+                            """
                             tmp_api = pull(login_name, userAuthSession, base_url, tmp_start, tmp_end, "transCode", trancode)
                             # tmp_api不为空时才去extend
                             if tmp_api:
@@ -731,7 +828,7 @@ def main():
                                     float(x['successRate']) / 100,
                                     float(x['avgTime'])
                                 ) for x in tmp_api])
-
+                            """
                             if i == 0: print("绘制折线图...", end="", flush=True)
                             if i == 11: print("25%...", end="", flush=True)
                             if i == 23: print("50%...", end="", flush=True)
@@ -740,6 +837,10 @@ def main():
 
                         api_day_start = api_day_end+timedelta(minutes=1)
                         api_day_end = api_day_start + timedelta(minutes=59)
+                        timesleep.sleep(0.05)
+
+
+
                     """ 不再计算统计量, 画图更直观
                     if len(list_freq) >= 30:  # 如果一天还调不到30次, 就算了(有30个分钟调到)
                         finded = True
@@ -801,10 +902,26 @@ def main():
                     api_day_start = datetime.strptime(time_end[:10], "%Y-%m-%d")
                     api_day_end = api_day_start + timedelta(minutes=59)
                     time_plot = []
+                    thread_list2 = []
                     for i in range(24):
                         tmp_start = api_day_start.strftime("%Y-%m-%d %H:%M")
                         tmp_end = api_day_end.strftime("%Y-%m-%d %H:%M")
                         try:
+
+                            thread = Thread(target=lambda: time_plot.extend(
+                                [(
+                                    # 这里不能用.time()转成datetime.time格式, matplotlib不支持
+                                    datetime.strptime(x['tradeTime'], "%H:%M"),
+                                    float(x['tradeCount']),
+                                    float(x['successRate']) / 100,
+                                    float(x['avgTime'])
+                                ) for x in pull(login_name, userAuthSession, base_url, tmp_start, tmp_end, "transCode", trancode) or []]
+                            ))
+                            thread_list2.append(thread)
+                            thread.start()
+
+
+                            """
                             tmp_api = pull(login_name, userAuthSession, base_url, tmp_start, tmp_end, "transCode",
                                            trancode)
                             # tmp_api不为空时才去extend
@@ -815,6 +932,7 @@ def main():
                                     float(x['successRate']) / 100,
                                     float(x['avgTime'])
                                 ) for x in tmp_api])
+                            """
 
                             if i == 11: print("75%...", end="", flush=True)
                             if i == 23: print("100%...", end="", flush=True)
@@ -823,6 +941,12 @@ def main():
 
                         api_day_start = api_day_end + timedelta(minutes=1)
                         api_day_end = api_day_start + timedelta(minutes=59)
+                        timesleep.sleep(0.05)
+
+                    for each in thread_list1:
+                        each.join()
+                    for each in thread_list2:
+                        each.join()
 
                     if time_plot: time_plot.pop(-1)  # 基准日的最后一分钟不全, 去掉
 
@@ -830,6 +954,9 @@ def main():
                         print("频次过低, 绘制失败!")
                         continue
 
+                    # 理论上matplotlib会自己给排序, 但实际效果好像不好, 所以这里存之前先手动排一下序
+                    time_plot.sort(key=lambda x: x[0])
+                    base_plot.sort(key=lambda x: x[0])
                     with open(getpath("plot.pickle"), "wb") as f:
                         pickle_dump([time_plot, base_plot], f)
                     # os.system("start /b python imms_draw.py")
@@ -844,37 +971,8 @@ def main():
                         os.system("start /b imms_draw -trancode {} -cd {} -td {} 1>nul 2>nul".format(trancode, time_end[:10], base_end[:10]))
                     else:
                         os.system("start /b python imms_draw.py -trancode {} -cd {} -td {} 1>nul 2>nul".format(trancode, time_end[:10], base_end[:10]))
-                    print("绘制成功!\n")
+                    print("等待渲染...")
 
-                    # 画完图, 打印自基准日到分析日的所有日统计:
-                    tmp_day_start = datetime.strptime(base_end[:10], "%Y-%m-%d")-timedelta(days=3)
-                    tmp_day_end = datetime.strptime(time_end[:10], "%Y-%m-%d")
-
-                    list_day = []
-                    tmp_day = tmp_day_start
-
-                    tmp_now = datetime.now().time()
-                    tmp_argv_l = tmp_now.hour*60+tmp_now.minute
-                    while tmp_day <= tmp_day_end:
-                        try:
-                            tmp_day_str = datetime.strftime(tmp_day, "%Y-%m-%d")
-                            tmp_api = pull(login_name, userAuthSession, base_url, tmp_day_str, tmp_day_str, "transCode", trancode, time_type=2)
-                            # tmp_api不为空时才去extend
-                            if tmp_api:
-                                list_day.extend([(
-                                    datetime.strptime(x['tradeDate'], "%Y-%m-%d"),
-                                    float(x['tradeCount'])/(tmp_argv_l if tmp_day.date() == now.date() else 24*60),
-                                    float(x['successRate']) / 100,
-                                    float(x['avgTime'])
-                                ) for x in tmp_api])
-                        except:
-                            pass
-                        tmp_day += timedelta(days=1)
-                    if list_day:
-                        print("基准日前三天至分析日当天全天统计量变化情况如下: ")
-                        print(spaces+"{:<12}{:<12}{:<12}{:<12}".format("Date", "Frequency", "Success", "Duration"))
-                        for each in list_day:
-                            print(spaces+"{:<12}{:<12.2f}{:<12.2%}{:<12.2f}".format(each[0].strftime("%m-%d"), each[1], each[2], each[3]))
 
     thread = PrintDes()
     thread.setDaemon(False)
