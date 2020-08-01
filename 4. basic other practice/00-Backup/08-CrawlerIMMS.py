@@ -948,8 +948,6 @@ def main():
                     for each in thread_list2:
                         each.join()
 
-                    if time_plot: time_plot.pop(-1)  # 基准日的最后一分钟不全, 去掉
-
                     if len(time_plot) < 10 or len(base_plot) < 10:
                         print("频次过低, 绘制失败!")
                         continue
@@ -957,6 +955,9 @@ def main():
                     # 理论上matplotlib会自己给排序, 但实际效果好像不好, 所以这里存之前先手动排一下序
                     time_plot.sort(key=lambda x: x[0])
                     base_plot.sort(key=lambda x: x[0])
+
+                    if time_plot: time_plot.pop(-1)  # 基准日的最后一分钟不全, 去掉; 注意这句话要在排序后调
+
                     with open(getpath("plot.pickle"), "wb") as f:
                         pickle_dump([time_plot, base_plot], f)
                     # os.system("start /b python imms_draw.py")
