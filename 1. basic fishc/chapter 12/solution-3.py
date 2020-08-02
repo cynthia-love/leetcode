@@ -69,3 +69,26 @@ c.mark()
 c.stop()
 print(c)
 
+# 比较一下get, getattribute, getattr
+class C:
+    def __init__(self):
+        self.x = 1
+
+    # .访问属性无论有没有都要先进到__getattribute__
+    def __getattribute__(self, item):
+        print("getattribute")
+        return object.__getattribute__(self, item)  # 别忘了加这句, 不然就终止了
+
+    def __get__(self, instance, owner):
+        print("get")
+
+    def __set__(self, instance, value):
+        print("set")
+
+    def __getattr__(self, item):
+        print("gtattr")
+        return 100
+
+c = C()
+print(c.x)
+print(c.y)

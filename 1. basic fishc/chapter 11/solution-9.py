@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Author: Cynthia
+# 四个attr函数和property一定要记好
 
 """
     和类相关的内置函数
@@ -33,13 +34,13 @@ print(getattr(c, "y"))  # 实例变量用实例名可访问, 类变量也可用�
 
 setattr(C2, "m", 100)
 print(C2.__dict__)
-# 这里要注意!!!c.x能访问到, 但c.x不能, 类实例化之后的修改不会对之前实例化的对象有影响!!!!!!
+# 这里要注意!!!c.x能访问到, 但c.m不能, 类实例化之后再修改类不会对已经实例化的实例有影响
 
 setattr(c, "n", 200)
 print(c.__dict__)  # 这里的set属性, 既可以给类set, 也可以给实例set
 
 # delattr(C2, "n")  # 这里会报错, 因为用类名访问不到实例变量
-delattr(C2, "m")  # 删除的时候得用类名
+delattr(C2, "m")  # m删除的时候得用类名
 
 
 # property

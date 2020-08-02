@@ -51,8 +51,13 @@
 - [多重继承](chapter%2011/solution-4.py)
 - [组合(把类作为数据类型使)](chapter%2011/solution-5.py)
 - [Mixin(重要, 给dict添加.访问和给class添加[]访问)](chapter%2011/solution-6.py)
+- [类变量和实例变量](chapter%2011/solution-7.py)
+- [绑定方法和非绑定方法](chapter%2011/solution-8.py)
+- [isinstance/hasattr/setattr/getattr/property](chapter%2011/solution-9.py)
 ##### chapter 12: 魔法方法
-
+- [\_\_init__和__del__和__new__](chapter%2012/solution-1.py)
+- [\_\_add__和__radd__和__pos__等](chapter%2012/solution-2.py)
+- [\_\_set__和__get__等](chapter%2012/solution-3.py)
 ##### chapter 13: 模块
 ##### chapter 14: 论一只爬虫的自我修养
 ##### chapter 15: GUI的最终选择: Tkinter
