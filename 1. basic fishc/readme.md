@@ -69,5 +69,13 @@
 - [timeit评估代码运行时间](chapter%2013/solution-3.py)
 ##### chapter 14: 论一只爬虫的自我修养
 - [urllib入门(不如requests模块好用)](chapter%2014/solution-1.py)
+- [下载一张图片](chapter%2014/solution-2.py)
+- [发送POST请求(有道翻译)](chapter%2014/solution-3.py)
+- [修改headers(不如requests方便)](chapter%2014/solution-4.py)
+- [延迟提交数据](chapter%2014/solution-5.py)
+- [设置代理](chapter%2014/solution-6.py)
+- [html/xml解析库: Beautiful Soup](chapter%2014/solution-7.py)
+- [提取百度百科义项并且二次跳转拿副标题](chapter%2014/solution-8.py)
+- [爬取贴吧图片, BS和RE两种方式](chapter%2014/solution-9.py)
 ##### chapter 15: GUI的最终选择: Tkinter
 ##### chapter 16: Pygame: 游戏开发

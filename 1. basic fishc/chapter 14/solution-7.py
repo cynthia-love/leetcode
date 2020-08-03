@@ -28,9 +28,9 @@ try:
 
     # 读取所有包含关键字view的链接
     # 可以根据属性去找, href=xxx, xxx可以是完整字符串, 也可以是正则, 注意是正则的时候不包括外边的双引号""
-    # soup.find_all(href=re.compile(r".*view.*")); xxx还可以是方法; 注意是方法的时候参数是标签对象
+    # soup.find_all(href=re.compile(r".*view.*")); 首参数还可以是方法; 注意是方法的时候参数是标签对象
     # 这里只能用x.has_attr("href")判断属性是否存在, 不能用python自带的 in 什么的; 标签属性访问这块什么时候.什么时候[]有点迷
-    # python里对象的attr是用.访问的, 对应__getattr__, __setattr__等; 容器里的元素才是用[]访问, 对应__getitem__
+    # python里对象的attr是用.访问的, 对应__getattribute__, __setattr__等; 容器里的元素才是用[]访问, 对应__getitem__
     # 而这里, 标签的属性attr是用[]访问, 对应has_attr等; 标签里的子标签却反而是用.访问的.children
     for each in soup.find_all(lambda x: x.has_attr("href") and "view" in x["href"]):
         print(each)
@@ -45,6 +45,7 @@ try:
 
     # 可以看一下findall, ('href="/view/10812319.htm"', '/view/10812319.htm'), 只包括group(1), group(2)...的; 如果外层不加(),
     # 这里只会拿到/view/10812319.htm
+    # 用findall有findall的好处, 正则写好了可以直接拿到想要的内容(把这部分内容用()括起来)
     for each in re.findall(r"(href=\"(\S*view\S*)\")", res.decode("utf-8")):
         print(each)
 
