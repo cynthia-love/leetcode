@@ -2,15 +2,16 @@
 # Author: Cynthia
 
 """
-    定制一个计时器的类
-    1. start启动, stop停止
-    2. print(实例)显示结果
-    3. 未启动时调stop给提示
-    4. 两个计时器对象可以相加
+    descriptor
+    猛一看不太好理解, 其实property就是一种descriptor(推荐property写法)
+    即descriptor有两种写法:
+    1. 老的, 要把get, set, delete单独写到一个类里, 然后在需要用到该变量的类里
+    x = 描述符类()
+    2. 新的写法, property写法, 不用独立类, 直接在用到该变量的类里写三个函数, 然后
+    x = descriptor(get, set, delete)
 
-    计时器变量有自己独有的特性, 可以抽象成descriptor
-    自己写个descriptor类就好, 没必要用property, 还乱
-    赋值时取当前时间, 取值时取两者差值
+    还要注意一点, get, set只在descriptor这种特殊场景才有意义, 它和getattribute, getattr
+    完全不是一个东西, 后者写到单个类里起到拦截作用, 而get, set写到单个类里一点作用没有
 """
 import time
 
@@ -68,27 +69,3 @@ c.start()
 c.mark()
 c.stop()
 print(c)
-
-# 比较一下get, getattribute, getattr
-class C:
-    def __init__(self):
-        self.x = 1
-
-    # .访问属性无论有没有都要先进到__getattribute__
-    def __getattribute__(self, item):
-        print("getattribute")
-        return object.__getattribute__(self, item)  # 别忘了加这句, 不然就终止了
-
-    def __get__(self, instance, owner):
-        print("get")
-
-    def __set__(self, instance, value):
-        print("set")
-
-    def __getattr__(self, item):
-        print("gtattr")
-        return 100
-
-c = C()
-print(c.x)
-print(c.y)

@@ -34,7 +34,7 @@ class C:
     #     for i in self.l:
     #         yield i
 
-    # 第二种方法, iter和next配合使
+    # 第二种方法, iter和next配合使, 不建议, 太繁琐
     def __iter__(self):
         self.index = 0
         return self
@@ -57,3 +57,42 @@ for item in c:
 
 for item in c:
     print(item)
+
+print("******************************")
+class C:
+    def __init__(self, *args, **kwargs):
+        print(args, kwargs)  # 注意这俩参数的特殊性, 其会自动去适配普通参数和key-value参数
+        # 比如这里args会输出([('a', 1), ('b', 2)],), kwargs会输出{'a': 1, 'b': 2, 'c': 3}
+        # 先忽略args, 将kwargs存成字典
+        self._d = kwargs
+
+    def __getitem__(self, item):
+        # 一般习惯先用in判断在不在
+        # 其实有时候用try, except更直接, 记住这种写法
+        try:
+            return self._d[item]
+        except KeyError:
+            return -1
+
+    def __setitem__(self, key, value):
+        self._d[key] = value
+
+    def __len__(self):
+        return len(self._d)
+
+    def __iter__(self):
+        for key in self._d:
+            yield key
+
+    def __contains__(self, item):
+        return item in self._d
+
+c = C([("a", 1), ("b", 2)], a=1, b=2, c=3)
+c["d"] = 8
+print(c["d"])
+print(len(c))
+for item in c:
+    print(item)
+
+print("e" in c)
+print(c["e"])

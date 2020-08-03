@@ -5,9 +5,12 @@
     描述符
     描述符, 是将某种特殊类型的类实例指派给另一个类的属性
 
-    大概总结了下, 如果说Mixin像是方法组件化, 可以动态混入类
+    大概总结了下, 如果说Mixin像是方法组件化, 可以动态给类混入功能特性
     那么描述符就是变量组件化, 将一类具有同样特点的变量封装起来
     比如某些变量, 存100, 取得时候就会减少10
+
+    一般情况下, 用property就够了
+    除非你写这个东西是真的是给其他人用的
 """
 class Descriptor:
     # 这么记, __get__是变量组件用的, 对外
@@ -59,6 +62,9 @@ class Fahrenheit:
     def __get__(self, instance, owner):
         return instance.cel*1.8+32
 
+    # 这里相当于用到了CT的实例里的cel
+    # 不建议这么干, Descriptor封装应该具有通用性
+
 class CT:
     cel = Celsius()
     fah = Fahrenheit()
@@ -71,8 +77,9 @@ print(ct.cel, ct.fah)
 
 
 # ***************************************************************
-# 自己去写一个property
-# 与descriptor相比, property更抽象了一步, 连__set__, __get__, __delete__都得外部写完传进去
+# 自己去写一个property类
+# 与descriptor相比, property类更抽象了一步, 连__set__, __get__, __delete__都得外部写完传进去
+# 但是不建议这么写, 因为默认传入的self参数就不是property类自己的了, 而是C的
 class propertym:
     def __init__(self, getm, setm, delm):
         self.getm = getm
@@ -103,4 +110,24 @@ class C:
 
 c = C()
 c.x = 10
+print(c.x)
+
+# ***************************************************************
+# 还可以更进一步, 直接用property函数, 都不用独立类了, 强烈推荐
+# 注意一点, init里的是self._x, 而后面声明的变量是x, 这样可以实现init里初始化
+# 如果init里直接写self.x会报错
+class C:
+    def __init__(self):
+        self._x = None
+
+    def _getX(self):
+        return self._x+1000
+
+    def _setX(self, value):
+        self._x = value
+
+    x = property(_getX, _setX)
+
+c = C()
+c.x = 1
 print(c.x)

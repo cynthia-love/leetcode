@@ -57,7 +57,12 @@
 ##### chapter 12: 魔法方法
 - [\_\_init__和__del__和__new__](chapter%2012/solution-1.py)
 - [\_\_add__和__radd__和__pos__等](chapter%2012/solution-2.py)
-- [\_\_set__和__get__等](chapter%2012/solution-3.py)
+- [descriptor入门: 秒表(get, set, delete)](chapter%2012/solution-3.py)
+- [属性访问getattr和\_\_getattribute__和__getattr__等](chapter%2012/solution-4.py)
+- [descriptor的三种写法(类、传参类、property)](chapter%2012/solution-5.py)
+- [序列和映射容器: \_\_len__和__getitem__和__setitem__等](chapter%2012/solution-6.py)
+- [迭代器深入](chapter%2012/solution-7.py)
+- [生成器, 即用yield实现的迭代器](chapter%2012/solution-8.py)
 ##### chapter 13: 模块
 ##### chapter 14: 论一只爬虫的自我修养
 ##### chapter 15: GUI的最终选择: Tkinter
