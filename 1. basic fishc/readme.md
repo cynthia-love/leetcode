@@ -64,6 +64,10 @@
 - [迭代器深入](chapter%2012/solution-7.py)
 - [生成器, 即用yield实现的迭代器](chapter%2012/solution-8.py)
 ##### chapter 13: 模块
+- [模块入门](chapter%2013/solution-1.py)
+- [手动添加包搜索路径](chapter%2013/solution-2.py)
+- [timeit评估代码运行时间](chapter%2013/solution-3.py)
 ##### chapter 14: 论一只爬虫的自我修养
+- [urllib入门(不如requests模块好用)](chapter%2014/solution-1.py)
 ##### chapter 15: GUI的最终选择: Tkinter
 ##### chapter 16: Pygame: 游戏开发

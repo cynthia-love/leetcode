@@ -33,6 +33,12 @@ from util import C
 o = C()
 o.f()
 
+# 给个别名, 强推
+from util import C as CCC
+o = CCC()
+print("11")
+o.f()
+
 # 非同一级目录下的导入, 需要导入目录是package, 即有__ini__.py
 import libs.util
 print(libs.util.x)
@@ -47,8 +53,8 @@ u.f()
 o = u.C()
 o.f()
 
-help(util)
-print(util.__doc__)
-help(util.f)
-help(util.C)
-print(util.C.__doc__)
+help(util)  # 直接help(util)模块, 会将NAME, DESCRIPTION, CLASSES, FUNCTIONS, DATA, FILE都打印
+print(util.__doc__)  # 而模块.__doc__只会打印上面属于模块的描述信息
+help(util.f)  # 仅打印函数描述信息
+help(util.C)  # 打印类里的Methods, Class methods, Data等信息
+print(util.C.__doc__)  # 和模块类似, 这么打印, 只打印类顶层的描述信息
