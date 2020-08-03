@@ -28,7 +28,7 @@ print(res.span(), res.span(0), res.span(1), res.span(2))
 res = re.search(r"\.ha.*", "dfkajdkjfkdjfiej.hadkajdjfk")
 print(res.group())  # .hadkajdjfk; 由于匹配不上返回None, 最好判断一下res再用res.group()
 res = re.search(r"\S*", "adkfjdkjfkdaf adkjfdkjf adfd")
-print(res.group())  # \S赋予S代表非空字符的能力
+print(res.group())  # \S赋予S代表非空字符的能力, adkfjdkjfkdaf
 
 # 字符枚举, [], 比如[abc], 表示匹配到单个字符a或b或c都行, 而不是123; 由于都是字符串, 内层不用再加引号
 res = re.search(r"[abc]", "hello adfd")
@@ -43,7 +43,8 @@ print(res.group())  # 212
 # 重复次数也可以指定范围, 不过是用,隔开, 而不是-; 重复次数好像没有枚举
 res = re.search(r"[123]{2,5}", "183239")
 print(res.group())  # 这里注意, 32能匹配上, 但不会停, 会一直匹配到323
-
+res = re.search(r"[123]{2,5}?", "183239")  # 后面加?开启非贪婪模式, 输出32
+print(res)
 
 # 或; 注意|的优先级最低, 所以123|423表示123或423而不是12323或12423
 res = re.search("123|423", "12423")
@@ -78,7 +79,7 @@ print(res.group())
 # 如果用findall注意下, findall会把带()的拆成子组
 res = re.findall(pattern, "192.168.1.1")
 print(res)  # [('192', '168', '1', '1')]
-# 想得到完整的匹配串, 除了用finditer, 还可以在最外层包一层括号
+# 想得到完整的匹配串, 又不想用finditer, 可以在最外层包一层括号
 res = re.findall("({})".format(pattern), "192.168.1.1")
 print(res)  # [('192.168.1.1', '192', '168', '1', '1')]
 

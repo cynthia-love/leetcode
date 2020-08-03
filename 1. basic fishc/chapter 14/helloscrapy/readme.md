@@ -1,19 +1,31 @@
 scrapy是专门的写爬虫的框架, 一般分为四个步骤:
 1. 创建项目
-2. 定义Item容器
-3. 编写爬虫
-4. 存储内容
+2. 定义Item容器(第一个要写的文件items.py)
+3. 编写爬虫(第二个要写的文件, spiders/dmoz.py)
+4. 存储内容(第三个要写的文件, pipelines.py)
+
+一般情况下, 这三个就够了, 有时候还需要写middlewares, 包括引擎-下载器中间件, 引擎-spider中间件
 
 scrapy框架主要分为这么几个部分
-1. scrapy engine, 引擎, 负责控制数据流在所有组件间流动, 并在相应动作时触发事件
-2. scheduler, 调度器, 为引擎服务, 提供请求调度服务, 引擎把待处理的请求压入调度器, 可以处理时再调出来
-3. downloader, 下载器, 引擎把请求从调度器里拿出来, 给下载器, 下载器获取页面数据给引擎
-4. downloader middlewares, 下载器中间件, 在下载器下载完页面数据后, 进行初步处理后再给引擎
-5. spiders, 爬, 引擎拿到response后交给spider进行正式处理的地方, 提取item和进一步爬取地址
-6. spider middlewares, spider中间件, 引擎在把response给spider时先在spider中间件里预处理一下,
-以及spider把提取出的item和进一步爬取地址给到引擎的时候, 也在spider中间件里预处理一下
+1. scrapy engine, 引擎, 负责控制数据流在不同组件间传递, 框架本身已实现
+2. scheduler, 调度器, 一个队列, 暂存引擎发送过来的请求, 框架本身已实现
+3. downloader, 下载器, 引擎把请求从调度器里拿出来, 给下载器, 下载器获取页面数据给引擎, 框架本身已实现
+4. downloader middlewares, 位于引擎和下载器之间, 处理引擎给下载器的request和下载器回来的response, 比如修改请求头部, 视需要实现
+5. spiders, 引擎拿到response后交给spider进行正式处理的地方, 提取item和进一步爬取地址, 要自己实现
+6. spider middlewares, 位于引擎和spider之间, 处理spider的输出(item和request)以及引擎回来的response, 视需要实现
 7. item pipeline, spider提取出来item给到引擎后, 引擎会给item pipeline进行专门的数据处理, 比如清理, 
-验证, 持久化(存储到数据库等)
+验证, 持久化(存储到数据库等), 要自己实现
+
+还是有点乱:
+1. spider的yield将request发送给engine
+2. engine对request不做任何处理发送给scheduler
+3. scheduler，生成request交给engine
+4. engine拿到request，通过middleware发送给downloader
+5. downloader在获取到response之后，又经过middleware发送给engine
+6. engine获取到response之后，返回给spider，spider的parse()方法对获取到的response进行处理，解析出items或者requests
+7. 将解析出来的items或者requests发送给engine
+8. engine获取到items或者requests，将items发送给ItemPipeline，将requests发送给scheduler
+（ps，只有调度器中不存在request时，程序才停止，及时请求失败scrapy也会重新进行请求）
 
 练手:
 http://www.dmoztools.net/Computers/Programming/Languages/Python/Books/

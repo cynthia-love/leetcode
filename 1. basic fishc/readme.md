@@ -77,5 +77,13 @@
 - [html/xml解析库: Beautiful Soup](chapter%2014/solution-7.py)
 - [提取百度百科义项并且二次跳转拿副标题](chapter%2014/solution-8.py)
 - [爬取贴吧图片, BS和RE两种方式](chapter%2014/solution-9.py)
+- [异常处理](chapter%2014/solution-10.py)
+- [正则表达式](chapter%2014/re)
+    - [正则入门](chapter%2014/re/solution-1.py)
+    - [常见特殊字符](chapter%2014/re/solution-2.py)
+    - [提前编译](chapter%2014/re/solution-3.py)
+    - [详解group和span](chapter%2014/re/solution-4.py)
+- [爬虫框架scrapy](chapter%2014/helloscrapy)
 ##### chapter 15: GUI的最终选择: Tkinter
+
 ##### chapter 16: Pygame: 游戏开发

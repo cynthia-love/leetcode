@@ -41,7 +41,7 @@ print(re.search("a{,5}", "bbaaaaad"))  # 注意这里, 至多5次, 0也符合, �
 print(re.findall("a{,5}", "bbaaaaad"))  # ['', '', 'aaaaa', '', ''], 有点怪
 print(re.search("a{6,}", "bbaaaaaadd"))  # aaaaaa
 
-# *, 匹配0次或多次
+# *, 匹配0次或多次, *+?后面都可以加?开启非贪婪模式
 print(re.search("ab*", "a"))  # a
 print(re.search("ab*", "abbbb"))  # abbbb
 
@@ -79,7 +79,7 @@ print(re.search(r"(aa)xx\1", "aaxxaabbbaa"))  # aaxxaa
 print(re.search(r"(25[0-5]|2[0-4][0-9]|[01]?[0-9]?[0-9])!\1!\1!\1", "192!192!192!192"))
 # 所以只能匹配到192!192!192!192, 而匹配不到192!168!1!2这种四个数不同的
 
-# \b, 匹配单词边界, 可以是空字符, ., ()等等
+# \b, 匹配单词边界, 注意这不是个实体字符, 比如a.b, \b是a和.之间的一个虚拟字符
 # 有时候搜索一一个子串, 要求这个子串是一个独立单词, 比如想找到单词var, 而不是variable的前三个字符
 print(re.search(r"\bFishC\b", "love FishC"))  # FishC
 print(re.search(r"\bFishC\b", "loveFishC"))  # None
@@ -87,8 +87,8 @@ print(re.search(r"\bFishC\b", "(FishC)"))  # FishC
 
 # \B与\b相反, 匹配到的子串不能是个独立单词
 print(re.search(r"fish\B", "fish."))  # None
-print(re.search(r"fish\B", "fishing")) # fish
-print(re.search(r"\bfish\B", "fishaaa")) # fish, 前有边界后不能有
+print(re.search(r"fish\B", "fishing"))  # fish
+print(re.search(r"\bfish\B", "fishaaa"))  # fish, 前有边界后不能有
 
 
 # \d, 匹配数字
