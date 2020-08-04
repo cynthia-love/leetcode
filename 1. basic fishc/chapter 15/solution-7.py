@@ -32,7 +32,7 @@ class MRatio:
 
 class MFrame:
     def __init__(self, parent):
-        # LabelFrame可以在框上面加文字, 且默认边框可见
+        # LabelFrame可以在框上面加文字, 且默认边框可见, 其他和frame一样
         f_l = LabelFrame(parent, text="这里是LabelFrame", padx=5, pady=5)
         f_l.pack(side='top')
 

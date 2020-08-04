@@ -3,6 +3,7 @@
 
 """
     进阶版本, 独立成一个App组件, 随时可以加到其他容器组件中去
+    需要往类里传入父组件parent
 """
 import random
 import tkinter as tk

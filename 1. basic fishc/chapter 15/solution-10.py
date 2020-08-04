@@ -43,7 +43,8 @@ class Calculator:
 
 
 root = Tk()
+root.geometry("500x300+100+100")
 frame = Frame(root)
-frame.pack(padx=10, pady=10)
+frame.pack(expand='yes', padx=10, pady=10)
 calculator = Calculator(frame)
 root.mainloop()

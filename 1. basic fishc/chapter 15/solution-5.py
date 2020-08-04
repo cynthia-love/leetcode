@@ -26,7 +26,7 @@ class Choice:
             # side控制摆放在四个方向的大致位置，然后anchor可以控制控件放置在side确定的区域内的某个位置。
             # side有四个取值, top, bottom, left, right, 有先来后到之分, 默认为top
             # 四个top相当于没指定, 体会一下, side会在剩余未占部分找top, bottom, left, right
-            cb.pack(side='top', anchor='w')
+            cb.pack(side='left', anchor='w')
 
 class MyFrame:
     def __init__(self, parent):
@@ -34,17 +34,17 @@ class MyFrame:
         self.state = [IntVar() for x in self.girl]  # 注意这里传入的一定是这个, 子组件才能触发父组件的值变化
 
         framel = Frame(parent)
-        framel.pack(side='left')
+        framel.pack(side='left', fill='y')
 
         choice = Choice(framel, self.girl, self.state, self.onchange)
 
         framer = Frame(parent)
-        framer.pack(side='right')
+        framer.pack(side='right', fill='y')
 
         self.text = StringVar()
         self.text.set("请挑选妃子~")
         label = Label(framer, textvariable=self.text, justify='left', fg='red')
-        label.pack()
+        label.pack(side='right')
 
     def onchange(self):
         state = [x.get() for x in self.state]
