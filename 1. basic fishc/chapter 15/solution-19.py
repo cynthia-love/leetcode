@@ -27,6 +27,7 @@ def click():
     contents2 = text.get(1.0, END)
     sig2 = getSig(contents2)
     print(sig1, sig2)
+    # b64encode的输入和输出也是byte
     print(b64encode(sig1), b64encode(sig2))
     print(b64encode(sig1).decode('utf-8'), b64encode(sig2).decode('utf-8'))
     if sig1 == sig2:

@@ -16,8 +16,9 @@ Scale(root, from_=0, to=42, length=500, resolution=0.5, orient=HORIZONTAL).pack(
 # 一般情况下, 步长都是1...不然怎么选中间的值, 当然, 步长也可以是小数
 value = IntVar()
 # 同样, Scale组件可通过variable把值与变量绑定
+# 这里参数x好像就是值
 Scale(root, from_=0, to=41, length=500, resolution=3, tickinterval=3, variable=value, orient=VERTICAL,
-      command=lambda: print(value.get())).pack()
+      command=lambda x: print(x, value.get())).pack()
 
 mainloop()
 

@@ -97,5 +97,16 @@
 - [Entry组件(演示小计算器)](chapter%2015/solution-10.py)
 - [Listbox组件](chapter%2015/solution-11.py)
 - [封装Listbox](chapter%2015/solution-12.py)
-- 
+- [Scale组件](chapter%2015/solution-13.py)
+- [Text组件](chapter%2015/solution-14.py)
+- [Text索引](chapter%2015/solution-15.py)
+- [Text自定义位置标记](chapter%2015/solution-16.py)
+- [Text自定义内容标记](chapter%2015/solution-17.py)
+- [Text事件绑定](chapter%2015/solution-18.py)
+- [Text计算MD5和Base64](chapter%2015/solution-19.py)
+- [Text搜索](chapter%2015/solution-20.py)
+- [Text的undo和redo入门](chapter%2015/solution-21.py)
+- [Text的undo和redo自定义粒度](chapter%2015/solution-22.py)
+- [Canvas绘制直线/矩形及移动/改变颜色/删除](chapter%2015/solution-23.py)
+- [Canvas绘制文本/圆/多边形](chapter%2015/solution-24.py)
 ##### chapter 16: Pygame: 游戏开发

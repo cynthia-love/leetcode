@@ -27,12 +27,16 @@ text.tag_config(SEL, background='yellow', foreground='blue')
 
 # 还可以手动插入tag， 手动插入的tag则是一次性的， 插入后就建立的对象绑定关系
 # tag_add有多个位置参数时，前两个识别为区间，其他的识别为特定位置
+# 注意, 区间和单个位置的区别: 设置了样式后, 再插入, 如果是往区间中间插入
+# 则插入的内容会套用新的样式, 往特定位置插入则不会套用
+# 把区间整体作为一个对象, 单个位置内容自己作为一个对象, 这么可能好理解些
 text.tag_add('tag1', '1.7', '1.12', '1.14')
 text.tag_config('tag1', background='black')
-text.insert('1.7', '新新新新新')  # 这里insert之后，后面的tag_config改的还是原1.7-1.12和1.14位置的内容
+text.insert('1.15', '新新新新新')  # 这里insert之后，后面的tag_config改的还是原1.7-1.12和1.14位置的内容
 text.tag_config('tag1', background='grey')
 # 如果想要样式在新插入的内容上重置，可以插入后在tag_add, tag_config一次，或者插入时直接指定tag名，表示重新绑定
 text.insert('1.7', "newnewnewnewnew", ('tag1',)) # 注意，不会对原1.7-1.12和1.14位置的内容样式产生影响
+# 这里给tag1增加了新的区间内容对象
 
 # 其他可设置的东西
 # font控制字体
@@ -45,7 +49,7 @@ text.tag_config(SEL, justify=RIGHT)
 # 首行缩进， 其他行缩进， tag要指向整个文本框
 text.tag_config(SEL, lmargin1=20, lmargin2=10)
 
-# 相对于基线的偏移量， 基线指每行的下方的线
+# 相对于基线往上的偏移量， 基线指每行的下方的线
 text.tag_config(SEL, offset=10)
 
 # 画一条删除线

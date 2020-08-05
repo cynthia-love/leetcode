@@ -3,7 +3,8 @@
 
 """
     Text组件, 可用于显示多行文本, 可作为简单文本编辑器, 网页浏览器
-    Text不光支持插入文本, 还支持插入图片, 插入其他组件(类似于frame)
+    Text不光支持插入文本, 还支持插入图片, 插入其他组件(即和canvas类似 也具有容器功能)
+    插入文本insert, 插入图片image_create, 插入组件window_create
 """
 
 from tkinter import *

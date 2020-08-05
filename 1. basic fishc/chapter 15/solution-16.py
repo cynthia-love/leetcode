@@ -2,7 +2,9 @@
 # Author: Cynthia
 
 """
-    Marks用法, 给某些位置做个标记
+    Marks用法, 给某些位置做个标记, 无非是个15中的索引加了个别名, 当然SEL_FIRST, SEL_LAST比较特殊
+    需要特殊注意的地方是, 这里的索引不是死的, 是会动的
+    比如middle本来是1.2, 选中1-2中间的位置, 输入俩字符, middle会后移成1.4
 """
 
 from tkinter import *
