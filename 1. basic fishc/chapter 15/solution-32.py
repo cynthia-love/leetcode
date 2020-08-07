@@ -14,7 +14,8 @@ root.geometry("500x500")
 m = Message(root, text="hello", width=100)
 m.pack()
 
-m = Message(root, text="这是到付款的开发的空间疯狂夺金发卡机快递费忌口的今飞凯达今飞凯达", width=100)
+m = Message(root, bg='green', fg='red', font=("黑体", 15),
+            text="这是到付款的开发的空间疯狂夺金发卡机快递费忌口的今飞凯达今飞凯达", width=100)
 m.pack()
 
 root.mainloop()

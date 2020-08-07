@@ -17,8 +17,8 @@ Button(text='点我', command=lambda :print(sb.get())).pack()
 
 var = StringVar()
 var.set(0)
-sb = Spinbox(root, from_=0, to=10, textvariable=var)
-sb.pack()
+sb2 = Spinbox(root, from_=0, to=10, textvariable=var)
+sb2.pack()
 
 Button(text='点我', command=lambda : print(var.get())).pack()
 

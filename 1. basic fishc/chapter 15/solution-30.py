@@ -11,8 +11,8 @@ root = Tk()
 mb = Menubutton(root, text='点我', relief=RAISED)
 mb.pack()
 
-# Menubutton的时候这里的mb不能省
-menu = Menu(mb, tearoff=False)  # Menubutton的下一级是顶层菜单
+# Menubutton的时候这里的mb不能省, 可以看出来, Menubutton mb实际上相当于前面的root
+menu = Menu(mb, tearoff=False)
 mb.config(menu=menu)
 
 menu.add_checkbutton(label='打开', command=lambda :print("打开"), selectcolor='yellow')

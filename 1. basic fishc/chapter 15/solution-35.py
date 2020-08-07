@@ -2,7 +2,7 @@
 # Author: Cynthia
 
 """
-    Toplevel组件, 可以理解成子Tk(), 是一种顶层窗口
+    Toplevel组件, 可以理解成子Tk(), 是一种顶层窗口, 比frame, panedwindow更顶层的东西
 """
 
 from tkinter import *
@@ -24,6 +24,7 @@ def f():
 Button(root, text="点我", command=f).pack()
 
 # tl.attributes单个参数表示打印, 两个参数表示设置
-Button(root, text="透明", command=lambda : print(tl.attributes('-alpha')) and tl.attributes('-alpha', 0.5)).pack()
+# 这里理解为什么要用or, 因为print函数本身返回None, 用or才会执行后面的语句
+Button(root, text="透明", command=lambda : print(tl.attributes('-alpha')) or tl.attributes('-alpha', 0.1)).pack()
 
 root.mainloop()

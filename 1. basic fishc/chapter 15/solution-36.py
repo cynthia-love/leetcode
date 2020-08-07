@@ -10,8 +10,8 @@ root.geometry('300x800')
 
 frame = Frame(root, height=100, width=300, bg='red')
 frame.pack()
-# 绑定鼠标左键双击事件, Button-2中键, Button-3右键
-frame.bind('<Double-Button-1>', lambda e: print(e.x, e.y))
+# 绑定鼠标左键双击事件, Button-2中键, Button-3右键; x_root, y_root是相对于整个屏幕
+frame.bind('<Double-Button-1>', lambda e: print(e, e.x, e.y, e.x_root, e.y_root))
 
 frame = Frame(root, height=100, width=300, bg='green')
 frame.pack()
