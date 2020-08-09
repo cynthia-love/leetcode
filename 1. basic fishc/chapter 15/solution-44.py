@@ -17,9 +17,8 @@
     INIT, RUN, PAUSE
 """
 from tkinter import *
-from tkinter import ttk, StringVar  # 为什么上面的*引入不进来
+from tkinter import StringVar  # 为什么上面的*引入不进来
 from datetime import datetime
-from typing import Dict, Union
 
 INIT, RUN, PAUSE = 1, 2, 3
 
@@ -80,6 +79,8 @@ class StopWatch(Frame):
         self.button1.config(text="计次", state=DISABLED)
         self.button2.config(text="启动", fg='lime')
 
+    # 看这俩f函数, 阶段转化一系列初始化等操作由改变前的stage负责
+    # 还有一种思路是由改变后的stage负责, 但这种思路往往更复杂, 一般需要同时周到from的stage
     def f1(self):
         if self.stage == INIT:
             # INIT阶段左键不可点
@@ -152,7 +153,7 @@ def main():
     root.attributes("-alpha", 0.66)  # 设置整个窗体的透明度
     # root.attributes("-fullscreen", True)  # 全屏
     # root.attributes("-topmost", True)  # 所有窗口中处于最顶层, 失焦也还是在最顶层
-    root.overrideredirect(True) # 取消标题栏, 但mac下设置了好像也不正常
+    # root.overrideredirect(True) # 取消标题栏, 但mac下设置了好像也不正常
     # root.resizable(width=False, height=False)  # 不让调整大小
 
     # quit终止所有tkinter应用程序, 范围不可控, 用destroy只终止本程序

@@ -34,6 +34,7 @@ Button(root, text="打开4", command=lambda :print(asksaveasfilename(
     title='haha', defaultextension='.jpg', filetypes=[('PDF', '.pdf'), ('ZIP', '.zip')],
     initialdir='/Users/soso'
 ))).pack()
+# filetypes的每一项有两个值, 值1是描述, 值2值具体的后缀
 
 
 root.mainloop()

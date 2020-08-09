@@ -2,7 +2,7 @@
 # Author: Cynthia
 
 """
-    place
+    place, 完全自由定义位置
     需要更精细化控制布局的时候, 比如一个组件在另一个组件上方
 """
 from tkinter import *

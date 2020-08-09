@@ -124,4 +124,12 @@
 - [Event对象专题](chapter%2015/solution-37.py)
 - [布局管理器详解-pack](chapter%2015/solution-38.py)
 - [布局管理器详解-grid](chapter%2015/solution-39.py)
+- [布局管理器详解-place](chapter%2015/solution-40.py)
+- [标准对话框](chapter%2015/solution-41.py)
+- [文件选择框](chapter%2015/solution-42.py)
+- [颜色选择框](chapter%2015/solution-43.py)
+- [iphone秒表](chapter%2015/solution-44.py)
 ##### chapter 16: Pygame: 游戏开发
+- [Pygame入门](chapter%2016/solution-1.py)
+- [自动移动的小乌龟](chapter%2016/solution-2.py)
+- 
