@@ -21,6 +21,7 @@ font = pg.font.Font(None, 20)  # 字体和尺寸
 
 line_height = font.get_linesize()
 # 字体尺寸和行高好像不是一回事, 这里行高为15
+# 这里是要得出render出的每一行文字占多高像素
 
 pos = 0
 
@@ -47,11 +48,11 @@ while True:
         if e.type == pg.VIDEORESIZE:
             print('videoresize', e.size, e.w, e.h)
         surface = font.render(str(e), True, (0, 255, 0))  # 文本, 是否消除锯齿, 颜色
-        screen.blit(surface, (0, pos))
+        screen.blit(surface, (0, pos))  # pos初始为0, 每一次指针往下移动一行
 
         pos += line_height
 
-        if pos > height:
+        if pos > height:  # 充满之后清屏, 实际上是通过背景覆盖实现的
             screen.fill(bg)  # 一行行加, 不会覆盖, 没必要重新涂背景
             pos = 0
 

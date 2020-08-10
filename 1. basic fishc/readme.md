@@ -132,4 +132,5 @@
 ##### chapter 16: Pygame: 游戏开发
 - [Pygame入门](chapter%2016/solution-1.py)
 - [自动移动的小乌龟](chapter%2016/solution-2.py)
-- 
+- [将event打印到屏幕上](chapter%2016/solution-3.py)
+- [键盘控制移动的小乌龟](chapter%2016/solution-4.py)
