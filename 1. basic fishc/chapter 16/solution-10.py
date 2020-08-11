@@ -28,6 +28,7 @@ img = pg.image.load('img/turtle.png')
 
 img1 = pg.transform.chop(img, (60, 60, 30, 30))  # 这么写可以实现只切掉竖直长条部分
 img2 = img.subsurface(60, 60, 30, 30).copy()
+# subsurface的四个参数, x, y, width, height
 
 # 开始处理
 pg.init()

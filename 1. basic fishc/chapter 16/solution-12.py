@@ -24,6 +24,7 @@ img1 = pg.image.load('img/turtle.png').convert_alpha()
 pos1 = img1.get_rect()
 
 # 如果图片本身没有alpha通道, 那调convert_alpha是没用的, 调convert就行
+# 即要么调convert(), 要么调convert_alpha(), 不要什么都不调
 img2 = pg.image.load('img/turtle.jpeg').convert()
 pos2 = img2.get_rect()
 pos2 = pos2.move(0, 200)
@@ -80,8 +81,10 @@ while True:
     screen.blit(temp, pos5)
     """
     为什么修改带alpha通道的图片透明度, 五的方法会比四的好呢???
-    因为原来的透明图并不是非黑即白的, 边缘部分不是从0一下变成250
+    因为原来的透明图并不是非黑即白的, 边缘部分不是从0一下变成250, 每个部分的透明度可能是不一样的
     方法四把非0的全都改成200, 原来小于200的也改了(这里是不是也提供了一种优化方法4的思路)
+    如果直接用set_alpha的话问题更大, 全图都统一透明度了, 而我们要的效果更像是按比例修改透明度
+    原来100的变60, 原来60的变36, 原来0的乘以0.6还是0 (嗯....这种思路好像和方法五比起来也不差)
     
     为什么方法五效果好呢
     先将目标区域的背景截出来, 画上原小乌龟, 合成之后这张图就没alpha通道了

@@ -232,6 +232,7 @@ class Farmer(pg.sprite.Sprite):
             self.image = self.frames[self.direction][self.step]
             self.tick = tick
 
+# Health和Text这种简单要素直接渲染就行, 不要再去写精灵类了
 class Health(pg.sprite.Sprite):
     def __init__(self, color, width, height):
         pg.sprite.Sprite.__init__(self)

@@ -134,3 +134,23 @@
 - [自动移动的小乌龟](chapter%2016/solution-2.py)
 - [将event打印到屏幕上](chapter%2016/solution-3.py)
 - [键盘控制移动的小乌龟](chapter%2016/solution-4.py)
+- [键盘控制移动的小乌龟II](chapter%2016/solution-5.py)
+- [使窗口全屏](chapter%2016/solution-6.py)
+- [使窗口尺寸可变](chapter%2016/solution-7.py)
+- [图像的缩放](chapter%2016/solution-8.py)
+- [图像的旋转](chapter%2016/solution-9.py)
+- [图像的裁剪](chapter%2016/solution-10.py)
+- [截图小工具](chapter%2016/solution-11.py)
+- [图像的其他转换](chapter%2016/solution-12.py)
+- [绘制简单图形](chapter%2016/solution-13.py)
+- [红豆吃黑豆](chapter%2016/solution-14.py)
+- [农民吃苹果](chapter%2016/solution-15.py)
+- [自定义碰撞检测函数](chapter%2016/solution-16.py)
+- [播放音乐](chapter%2016/solution-17.py)
+- [PlayTheBall](chapter%2016/solution-18.py)
+- [导出gif或mp4](chapter%2016/solution-19.py)
+- [直接导出图片](chapter%2016/solution-20.py)
+- [Aircraft](chapter%2016/aircraft)
+
+
+

@@ -6,6 +6,7 @@
     先捋清楚过程, 初始select0, 开始选择select1(直接松开重置0), 选择过程中select2, 选择结束select3
     开始拖拽select3 drag1(直接松开重置0), 拖拽过程中select3 drag2, 拖拽结束select3 drag3
     之后点击所选择区域和其他区域, 分别执行不同操作
+    这里其实和后面的stage是一个思路, 无非是设置了两个参数
 """
 
 import sys

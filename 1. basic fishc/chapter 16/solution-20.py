@@ -21,7 +21,7 @@ pg.display.set_mode(SIZE)
 
 surface = pg.Surface(SIZE)
 surface = surface.convert_alpha(surface)
-surface.fill(WHITE_ALPHA)
+surface.fill(WHITE_ALPHA)  # convert_alpha之后颜色才能带上第四位透明度
 
 # font = pg.font.Font(None, 20)
 # text = font.render("Hello~", True, RED)

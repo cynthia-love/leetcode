@@ -29,9 +29,9 @@ def collide_check_rect(item, target, remove=False):
 
     res = pg.sprite.Group()
     for each in target:
-
-        if abs(item.rect.x-each.rect.x) < (item.rect.width/2+each.rect.width/2) and \
-                abs(item.rect.y-each.rect.y) < (item.rect.height/2+each.rect.height/2):
+        # 注意矩形碰撞检测里也要用中心点
+        if abs(item.rect.center[0]-each.rect.center[0]) < (item.rect.width/2+each.rect.width/2) and \
+                abs(item.rect.center[1]-each.rect.center[1]) < (item.rect.height/2+each.rect.height/2):
             res.add(each)
             if remove: target.remove(each)
     return res

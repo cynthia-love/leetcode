@@ -69,6 +69,9 @@ class Player(pg.sprite.Sprite):
                     pg.event.post(pg.event.Event(EVENT_PLAYER_DESTROYED, {}))
 
                     """
+                    如果想绕开下面描述的这种复杂逻辑也可以, 主循环里渲染+update之后去判断player状态, 
+                    如果是destroy状态且图片index超限, 表明破坏动画完成, 如果生命足够, 生命减一然后reset
+                    
                     好好理一下这块逻辑, 首先我机最后一帧坠毁图片渲染完之后需要给主函数通知
                     然后判断是不是最后一架, 不是, reset个新的, 是, 切换至STOP阶段
                     然后主函数里由于阶段转换事件处理放在了最底下, 其最终逻辑顺序为:

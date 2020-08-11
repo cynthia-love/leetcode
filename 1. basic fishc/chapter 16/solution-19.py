@@ -4,14 +4,14 @@
 """
     将pygame每一帧分别转成gif和mp4格式
 """
-import cv2
+import cv2  # 一个基于BSD许可(开源)发行的跨平台计算机视觉库
 import sys
 import numpy
 import random
-import imageio
+import imageio  # 提供了读取与写入图片数据的基本方法
 import pygame as pg
-from PIL import Image
-from moviepy.editor import VideoFileClip
+from PIL import Image  # 图像处理工具包
+from moviepy.editor import VideoFileClip  # 一个专业的视频编辑库
 from moviepy.editor import AudioFileClip
 from moviepy.editor import concatenate_videoclips
 from moviepy.editor import concatenate_audioclips

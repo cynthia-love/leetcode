@@ -57,6 +57,9 @@ while True:
             size = width, height = e.size
             screen = pg.display.set_mode(size, RESIZABLE)
 
+    screen.fill(bg)
+    screen.blit(turtle, pos)
+
     pos = pos.move(speed)
 
     if pos.left < 0 or pos.right > width:
@@ -66,9 +69,5 @@ while True:
     if pos.top < 0 or pos.bottom > height:
         speed[1] = -speed[1]
 
-    screen.fill(bg)
-    screen.blit(turtle, pos)
-
     pg.display.flip()
-
     clock.tick(100)

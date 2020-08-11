@@ -47,7 +47,7 @@ block_list = pg.sprite.Group()
 all_list = pg.sprite.Group()
 
 # 这里为什么要生成两个
-# 因为其中一个用于
+# 因为其中一个用于渲染
 
 for i in range(50):
 

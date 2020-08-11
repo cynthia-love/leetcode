@@ -57,6 +57,7 @@ while True:
     pg.draw.ellipse(screen, color, (200, 450, 200, 100), 1)
 
     # 弧形, 和椭圆一样, 也是先指定矩形, 然后指定开始角度, 结束角度, 即椭圆的一部分
+    # 注意这里是弧度, 而tkinter里的canvas好像是角度
     pg.draw.arc(screen, color, (400, 50, 200, 100), 0, pi, 1)
 
     # 绘制线段
