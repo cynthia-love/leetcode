@@ -7,7 +7,7 @@
 
 """迭代器"""
 # 注意, 可迭代的 != 是迭代器
-# list, tuple, set, str, dict, file都是可迭代的, 但其本身并不是迭代器
+# list, tuple, set, str, dict, file, generator都是可迭代的, 但其本身并不是迭代器
 # 只有迭代器才能调用next(), 没有后续元素抛出StopIteration
 # 对于可迭代的对象, 可以通过iter(obj)获取其对应的迭代器
 # for循环实际上是自动实现了获取迭代器->next->没有后续元素抛出StopIteration终止
