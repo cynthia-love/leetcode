@@ -245,3 +245,9 @@ print(sys.stdin)  # <_io.TextIOWrapper name='<stdin>' mode='r' encoding='UTF-8'>
 print(sys.stdout, sys.stderr)  # print不能满足要求时, 可以直接操作这俩流对象
 print(sys.exec_prefix)  # /opt/anaconda3, python解释器安装位置
 print(sys.byteorder)  # big-endian还是little-endian
+
+# 8. re, 正则, 后面单独讲
+# 9. time, 对测量时间或延迟程序提供支持, 相比较datetime, 其功能更接近操作系统层面
+import time
+print(time.time())  # 1597584501.7364721
+time.sleep(1.1)  # time模块也就这俩常用了吧, 日期时间格式化什么的用datetime模块吧
