@@ -173,12 +173,75 @@ print(math.log(4, 2))
 
 # 6. os, 提供与操作系统底层交互
 import os
-"""
-os.remove(path/filename)删除文件
-os.rename(old, new)重命名文件
-os.walk()遍历
-os.chdir(dirname)改变目录
 
-"""
+# 打印当前工作目录
+# print(os.getcwd())
+
+# 改变当前工作目录
+# os.chdir("osdir")
+# print(os.getcwd())
+
+# 创建单级目录
+# os.mkdir("osdir")
+
+# 创建多级目录
+# os.makedirs("osdir/osdir2/osdir3")
+
+# 创建文件, 用open吧
+# f = open("osdir/osdir2/osdir3/text.txt", "w")
+
+# 重命名文件
+# os.rename("osdir/osdir2/osdir3/text.txt","osdir/osdir2/osdir3/text2.txt",)
+
+# 遍历
+# for root, dirs, files in os.walk("."):
+#     print(root)
+
+# 列出指定目录文件
+# print(os.listdir("."))  # 相当于walk里对应目录下的dirs和files
+
+# 改变权限
+# os.chmod("osdir/osdir2/osdir3/text2.txt", mode=0o777)
+# os.chmod("osdir", mode=0o777)
+
+# 删除文件
+# os.remove("osdir/osdir2/osdir3/text2.txt")
+
+# 删除指定目录
+# os.rmdir("osdir/osdir2/osdir3")
+
+# 删除指定目录, 且往上删除
+# 首先, rmdir和removedirs都只能删除非空目录
+# rmdir删完就完了, removedirs则往上查找, 如果该目录删完, 父目录也变空了, 继续删
+# 不建议用removedirs, 容易产生不可预知的结果!!!!!
+# os.removedirs("osdir/osdir2")
+
+# 总结, 删除文件用remove, 删除空目录用rmdir, 删除非空目录用shutil.rmtree(path)
+
+# path里有几个方法是操作路径字符串, 不一定是实际的路径
+s = "xxx/xxx/test.txt"
+print(os.path.dirname(s), os.path.basename(s), os.path.split(s), os.path.splitext(s))
+# xxx/xxx test.txt ('xxx/xxx', 'test.txt') ('xxx/xxx/test', '.txt')
+print(os.path.join("xxx/bbb", "xxx.txt"))  # xxx/bbb/xxx.txt
+print(os.path.join("xxx/bbb/", "ccc"))  # xxx/bbb/ccc
+print(os.path.isabs("aaa/bbb"))
+# 其他方法是有实际对应目录/文件的
+print(os.path.exists("data"), os.path.exists("data/out.txt"))  # 目录或文件是否存在
+print(os.path.isdir("data"), os.path.isfile("data/out.txt"))  # 目录是否存在/文件是否存在
+print(os.path.getsize("data"), os.path.getatime("data/out.txt"))  # 目录或文件的大小, 时间
 
 # 7. sys, 提供了与python解释器交互, 用于操控python的运行时环境
+import sys
+print(sys.argv)  # 命令行启动参数, 第一个是程序本身路径['/Users/soso/leetcode/3. basic algorithm/chapter 01/solution-11.py']
+print(sys.modules)  # 所有默认和手动导入的包
+print(sys.exc_info())  # 当前处理的异常详细信息, exc_type、exc_value、exc_traceback
+# sys.exit(), 正常退出传0
+print(sys.version)  # 获取python解释器的版本信息
+print(sys.maxsize)
+print(sys.maxunicode)
+print(sys.path)  # 这里就看出和os的区别了, os里的path是系统目录/文件, 这里则是解释器搜索路径
+print(sys.platform)  # darwin
+print(sys.stdin)  # <_io.TextIOWrapper name='<stdin>' mode='r' encoding='UTF-8'>
+print(sys.stdout, sys.stderr)  # print不能满足要求时, 可以直接操作这俩流对象
+print(sys.exec_prefix)  # /opt/anaconda3, python解释器安装位置
+print(sys.byteorder)  # big-endian还是little-endian
