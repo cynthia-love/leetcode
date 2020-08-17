@@ -7,12 +7,28 @@
 from itertools import permutations
 def f1():
     l = ['c', 'a', 't', 'd', 'o', 'g']
-    l_p = permutations(l, len(l))
-    for each in l_p:
-        print("".join(each))
+    g = permutations(l, len(l))
+    l_p = list(g)
+    return l_p
 
-f1()
+print(len(f1()))
 
-# 方法2, 自己实现
+# 其他方法, 自己实现
+# 方法1, 递归
+def f2():
+    l = ['c', 'a', 't', 'd', 'o', 'g']
+    r = []
+    def rf(res, l):
+        if len(l) == 1:
+            r.append(res+l[0])
+        else:
+            for i in range(len(l)):
+                rf(res+l[i], [l[j] for j in range(len(l)) if j!=i ])
+                # 注意这里用的解析语法, 会生成一个新的[], 避免直接在原[]上改影响了下一次递归
+
+    rf("", l)
+    return r
+print(len(f2()))
+
 
 
