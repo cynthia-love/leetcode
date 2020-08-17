@@ -34,7 +34,7 @@ print(random.random())  # 无参数, 返回开区间(0.0, 1.0)内的小数
 random.seed(time.time())
 print(random.randint(1, 10))  # 返回闭区间[a, b]内的整数
 
-print(random.randrange(1, 10, 3))  # 返回闭区间[a, b]内以step为间隔的整数, 这里相当于1, 4, 7, 10随机
+print(random.randrange(1, 10, 3))  # 返回前闭后开区间[a, b)内以step为间隔的整数, 这里相当于1, 4, 7, 10随机
 
 print(random.choice([8, 1.1, 100, 'a']))  # 给定随机范围
 
