@@ -402,11 +402,12 @@ def f10():
 
         t = n-1
         tmp = []
+        # 54231变23145再变32145
         while k and k[0] == t:
             k.pop(0)
-            tmp.append(t)
+            tmp.insert(0, t)
             t -= 1
-        k.extend(tmp[::-1])
+        k.extend(tmp)
 
         for i in range(n - 1, -1, -1):
             if k[i] == t:
@@ -420,5 +421,3 @@ def f10():
     return r
 
 print(len(f10()))
-# 8.20号, 记得优化一下f10, 这么设置tmp还pop翻转什么的性能不好
-
