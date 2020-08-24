@@ -559,6 +559,8 @@ pizza.prepare()
 cake = factory.createCake()
 cake.cook()
 
+# 除了上面简单的抽象工厂, 还可以再添加一个中间层PizzaFactory, CakeFactory
+
 # 2.1.3 软件工程设计模式-创建型模式-单例
 # 2.1.4 软件工程设计模式-创建型模式-建造者
 # 2.1.5 软件工程设计模式-创建型模式-原型
