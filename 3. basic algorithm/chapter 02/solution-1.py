@@ -465,6 +465,7 @@ class BaseFactory(metaclass=ABCMeta):
     def createPizza(self, ptype):
         pass
 
+# 生产线1, 只生产cheese和pepper, cheese和pepper归属于同一产品线
 class FirstFactory(BaseFactory):
     def createPizza(self, ptype):
         if ptype == 'cheese':
@@ -473,6 +474,7 @@ class FirstFactory(BaseFactory):
             return PepperPizza()
         else:
             return None
+# 生产线2, 只生产cheese和greek
 class SecondFactory(BaseFactory):
     def createPizza(self, ptype):
         if ptype == 'cheese':
