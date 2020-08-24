@@ -234,16 +234,329 @@ f5()
 # 处, 而分支界限法中, 每个活结点只有一次机会成为扩展节点, 活结点一旦成为扩展节点, 就一次性产生其
 # 所有子节点, 一般用队列实现广度优先搜索. 关于第一点区别, 没太明白, 感觉分支限界和回溯的唯一区别
 # 就是一个是深度一个是广度, 也都是在所有解里找最优, 而且也都存在限界函数, 还如叫深度限界, 广度限界
-"""用状态空间树的思维去理解, 从根节点出发, 分支限界法"""
+"""用状态空间树的思维去理解, 从根节点出发, 分支限界法不断地去试其所有子节点, 差不多就加到队列里去"""
+"""注意, 用分支法的解也是根节点到叶节点的路径, 而不是叶节点"""
+from collections import deque
+def f6():
+    w = [1, 2, 3, 5]
+    v = [4, 7, 9, 10]
+    n = 4
+    c = 7
+
+    # 分支限界用的是队列存储当前W, V
+    bestV = 0
+    bestS = None
+
+    dq = deque()
+
+    def bound(i, curW, curV):
+        lw = c - curW
+        cv = curV
+
+        while i < n and w[i] <= lw:
+            lw -= w[i]
+            cv += v[i]
+            i += 1
+        # 循环出来的i, 要么超限, 要么是装不下的那个, 后一种如要打碎了装进去
+        if i < n:
+            cv += (v[i]/w[i]) * lw
+        return cv
+
+    # 压入初始节点
+    for each in [True, False]:
+        cw = w[0] if each else 0
+        cv = v[0] if each else 0
+
+        if cw <= c and bound(1, cw, cv) > bestV:
+            dq.append((0, cw, cv, [each]))
+
+    while dq:
+        i, cw, cv, s = dq.popleft()
+
+        i = i+1
+
+        if i > n-1:
+            if cv > bestV:
+                bestV = cv
+                bestS = s
+        else:
+            for each in [True, False]:
+                cw2 = cw + (w[i] if each else 0)
+                cv2 = cv + (v[i] if each else 0)
+                # 处理完当前节点不超重且继续走下去可能最佳大于当前最佳
+                # 才把当前节点入队列
+                if cw2 <= c and bound(i+1, cw2, cv2) > bestV:
+                    dq.append((i, cw2, cv2, s+[each]))
+
+    print(bestS, bestV)
+
+f6()
 
 
 # 1.3.6 算法设计模式-算法思想-贪心
+# 贪心指对问题求解时, 总是做出在当前看来最好的选择, 其得到的只是某种意义上的局部最优解而非整体最优
+# 为了保证局部最优就是整体最优, 在用贪心法时, 需要问题具备贪心选择性质, 即一个问题的整体最优解可以
+# 通过一系列局部的最优解的选择达到, 并且每次的选择可以依赖以前做出的选择, 但不依赖后面要做出的选择
+# 换一种说法就是, 一个问题的最优解包含子问题的最优解, 即具有最优子结构性质
+# 贪心算法没有固定的算法框架, 其设计的关键是贪心策略的选择; 注意, 贪心算法适用的情况很少
+# 以背包问题为例, 传统的背包问题是不能用贪心的, 必须是物品可分隔, 然后贪心策略为优先选取单位价值最大
+"""用状态空间树的思维去理解, 贪心算法需要满足这样的性质, 其子问题的最优解路径与整体最优解路径重合"""
+"""比如n-1的最优解路径A-C-D-G, 那么n的最优解路径只能在此基础上扩展A-C-D-G-XXX"""
+def f7():
+    # 例子, 找零, 典型的贪心算法
+    # 贪心策略, 每一步尽可能用面值大的
+    # 100 50 20 10 5 2 1
+    # 怎么证明这种贪心策略具有贪心选择性质呢?
+    f = [100, 50, 20, 10, 5, 2, 1]
+    p = 827
+    r = {}
+    for each in f:
+        r[each] = p // each
+        p = p % each
+    print(r)
+f7()
 
 # 1.3.7 算法设计模式-算法思想-动态规划
+# 动态规划类似于分治法, 也是将待求解问题分解成若干个子问题, 先求解子问题, 然后进一步得到原问题的解
+# 硬要说区别的话, 分治法里分解完之后, 各个子问题是独立的(或者说解空间树里最终解是叶节点)
+# 而动态规划里子问题往往不是相互独立的(解空间树里解一般是根节点到叶节点的路径, 而不是叶节点)
+# 由于这种不相互独立, 中间节点会经过多次, 动态规划的思路就是把中间节点的值存起来, 避免重复计算
+# 适用于动态规划的一般称为多阶段决策问题, 即一类活动可以分为若干个相互联系的阶段, 每一个阶段都
+# 需要作出决策, 一个阶段的决策确定以后, 常常影响到下一个阶段的决策, 从而完全确定了一个过程的活动路线
+# 各个阶段的决策构成一个决策序列, 称为一个策略
+# 要求状态满足无后效性, 即给定某一阶段的状态, 则再这一阶段以后过程的发展不受这阶段以前各阶段状态的影响
+# 即每个阶段选择策略时只需考虑当前的状态, 而无需考虑过程的历史
+
+# 适用动态规划的问题需要满足1. 最优化原理, 即最优子结构, 不论过去状态和决策如何, 对前面的决策所形成的状态
+# 而言, 余下的诸策略必须构成最优策略; 2. 无后效性, 以前各阶段的状态无法影响未来的决策; 3. 子问题有重叠性
+# 贪心是一条路走到黑, 动规是中间状态都求出来
+
+from collections import deque
+def f8():
+    # 还是0-1背包问题
+    """
+    1. 先抽象问题, max(aV1+bV2+....), a..b..取值0或1
+    约束条件, aW1+bW2+... <= capacity
+    2. 能不能用动态规划, 要证明是否满足最优化原理, 用反证法
+    (a, b, c...)为最优解, 假设(b, c...)不是子问题最优, 而是(m, n....)
+    则: aV1+mV2+nV3+... > aV1+bV2+cV3...
+    那么原问题的最优解就是(a, m, n...)了而不是(a, b, c...), 假设不成立
+    所以(b, c, ...)是子问题最优解
+    所以该问题满足最优化原理
+    3. 定义V(i, j), 表示在前i个物品挑选总重量不超过j的物品的最优值
+    寻找递推关系式, 对于第i个物品
+    (1) j < w(i), V(i, j) = V(i-1, j)
+    (2) j > w(i), V(i, j) = max(V(i-1, j), V(i-1, j-w(i))+v(i))
+    !!!动规最关键的就是想出来这么个表格, 可以是一维, 也可以是二维的!!!
+    怎么理解这俩递推关系式?
+    比如V(4, 7)? 7能装下第四个物品, 所以V(4, 7)的最优值有两种路径, 选第4个和不选第4个
+    即: max V(3, 7-5)+10 和 V(3, 7)
+
+    按行去遍历, 每一行的意义为前i个物品, 背包容量分别为1~7时最优解(其实有点像暴力枚举...)
+
+    4. 初始化边界, V(x, 0)肯定为0, 即第一竖列都为0, V(0, y), 还没开始装, 也都是0
+
+    """
+    w = [0, 1, 2, 3, 5]
+    v = [0, 4, 7, 9, 10]  # w, v前面补俩0便于操作
+    n = 4
+    c = 7
+    np = [[0 for _ in range(c+1)] for _ in range(n+1)]
+    res = [False for _ in range(n+1)]
+
+    for i in range(1, n+1):
+        for j in range(1, c+1):
+            if w[i] > j:
+                np[i][j] = np[i-1][j]
+            else:
+                np[i][j] = max(np[i-1][j], np[i-1][j-w[i]]+v[i])
+    print(np[4][7])  # 20
+    print(np)
+    # 求出来最优解的值之后, 还要往回找, 找到其对应的多阶段决策
+    ct = 7
+    for i in range(n, 0, -1):
+        if np[i][ct] == np[i-1][ct]:
+            res[i] = False
+        else:
+            res[i] = True
+            ct -= w[i]
+    print(res[1:])
+f8()
+
+def f9():
+    # 动规例题2, 斐波那契竖列 f(n) = f(n-1) + f(n-2)
+    """
+    判断条件:
+    1. 判断特征有最优子结构
+    2. 子问题间有重叠(存储中间结果, 节约计算)
+
+    一般过程:
+    1. 发现子问题
+    2. 确定状态转移方程 f(n) = f(n-1) + f(n-2)
+    """
+    # 递归形式
+    n = 10
+    dp = [-1 for _ in range(n+1)]
+    dp[1], dp[2] = 0, 1
+
+    def rf(n):
+        v1, v2 = None, None
+        if dp[n-1] == -1:
+            dp[n-1] = v1 = rf(n-1)
+        else:
+            v1 = dp[n-1]
+        if dp[n-2] == -1:
+            dp[n-2] = v2 = rf(n-2)
+        else:
+            v2 = dp[n-2]
+        return v1+v2
+
+    print(rf(10))
+
+    # 非递归形式
+    dp = [-1 for _ in range(n+1)]
+    dp[1], dp[2] = 0, 1
+    for i in range(3, n+1):
+        dp[i] = dp[i-1] + dp[i-2]
+    print(dp[10])
+
+f9()
+
 
 """软件工程设计模式"""
 # 2.1.1 软件工程设计模式-创建型模式-工厂
+# 简单工厂, 创建一个工厂类, 用于实例化对象
+# 简单工厂生产模式固定, 比如一共三种产品
+# 某工厂生产两种, 那这个两种就固定了, 即createPizza方法固定, 可以理解为生产线
+from abc import ABCMeta, abstractmethod
+class Pizza(metaclass=ABCMeta):
+    @abstractmethod
+    def prepare(self):
+        pass
+
+class CheesePizza(Pizza):
+    def prepare(self):
+        print("prepare cheese pizza")
+
+class PepperPizza(Pizza):
+    def prepare(self):
+        print("prepare pepper pizza")
+
+class GreekPizza(Pizza):
+    def prepare(self):
+        print("prepare greek pizza")
+
+class PizzaFactory:
+    def createPizza(self, ptype):
+        if ptype == 'cheese':
+            return CheesePizza()
+        elif ptype == 'pepper':
+            return PepperPizza()
+        else:
+            return None
+pizza_factory = PizzaFactory()
+pizza = pizza_factory.createPizza("cheese")
+pizza.prepare()
+
+# 工厂模式, 在简单工厂基础上, 对createPizza方法进一步抽象
+# 可以在现有产品基础上, 任意组件生产线, 支持生产其中的某种或某几种产品
+class BaseFactory(metaclass=ABCMeta):
+    @abstractmethod
+    def createPizza(self, ptype):
+        pass
+
+class FirstFactory(BaseFactory):
+    def createPizza(self, ptype):
+        if ptype == 'cheese':
+            return CheesePizza()
+        elif ptype == 'pepper':
+            return PepperPizza()
+        else:
+            return None
+class SecondFactory(BaseFactory):
+    def createPizza(self, ptype):
+        if ptype == 'cheese':
+            return CheesePizza()
+        elif ptype == 'greek':
+            return GreekPizza()
+        else:
+            return None
+
+factory = SecondFactory()
+pizza = factory.createPizza("greek")
+pizza.prepare()
+
+
 # 2.1.2 软件工程设计模式-创建型模式-抽象工厂
+# 抽象工厂, 在工厂的基础上在进一步抽象, 不仅可以自定义单个产品系列的产品线
+# 还可以支持增加其他产品系列的产品线
+# 比如不光有三种pizza, 还有三种馅饼, fruit, bean, veg
+# 其实如果不添加其他各种中间抽象类, 抽象工厂模式和工厂模式唯一区别在于
+# BaseFactory里有多个产品序列而不是一个, 当然一个的时候也是抽象工厂模式
+# 即工厂模式是一种特殊的抽象工厂模式
+class Pizza(metaclass=ABCMeta):
+    @abstractmethod
+    def prepare(self):
+        pass
+
+class CheesePizza(Pizza):
+    def prepare(self):
+        print("prepare cheese pizza")
+
+class PepperPizza(Pizza):
+    def prepare(self):
+        print("prepare pepper pizza")
+
+class GreekPizza(Pizza):
+    def prepare(self):
+        print("prepare greek pizza")
+
+class Cake(metaclass=ABCMeta):
+    @abstractmethod
+    def cook(self):
+        pass
+class FruitCake(Cake):
+    def cook(self):
+        print("cook fruit cake")
+class BeanCake(Cake):
+    def cook(self):
+        print("cook bean cake")
+class VegCake(Cake):
+    def cook(self):
+        print("cook veg cake")
+
+# 两个系列的产品, 每个系列三种
+
+class BaseFactory(metaclass=ABCMeta):
+    @abstractmethod
+    def createPizza(self):
+        pass
+    @abstractmethod
+    def createCake(self):
+        pass
+
+# A工厂支持生产第一种pizza和第一种cake
+class AFactory(BaseFactory):
+    def createPizza(self):
+        return CheesePizza()
+
+    def createCake(self):
+        return FruitCake()
+
+# B工厂支持生产第二种pizza和第三种cake
+class BFactory(BaseFactory):
+    def createPizza(self):
+        return PepperPizza()
+
+    def createCake(self):
+        return VegCake()
+
+factory = AFactory()
+pizza = factory.createPizza()
+pizza.prepare()
+cake = factory.createCake()
+cake.cook()
+
 # 2.1.3 软件工程设计模式-创建型模式-单例
 # 2.1.4 软件工程设计模式-创建型模式-建造者
 # 2.1.5 软件工程设计模式-创建型模式-原型
