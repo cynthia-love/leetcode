@@ -460,6 +460,7 @@ pizza.prepare()
 
 # 工厂模式, 在简单工厂基础上, 对createPizza方法进一步抽象
 # 可以在现有产品基础上, 任意组件生产线, 支持生产其中的某种或某几种产品
+# 抽象工厂模式则是在工厂模式的基础上, 把多种工厂再封起来, 称为返回工厂的工厂
 class BaseFactory(metaclass=ABCMeta):
     @abstractmethod
     def createPizza(self, ptype):
@@ -558,15 +559,241 @@ pizza = factory.createPizza()
 pizza.prepare()
 cake = factory.createCake()
 cake.cook()
+# 除了上面的普通抽象工厂, 还可以再添加一个中间层PizzaFactory, CakeFactory
 
-# 除了上面简单的抽象工厂, 还可以再添加一个中间层PizzaFactory, CakeFactory
+# 有些地方说抽象工厂不只是多个条线, 而且在工厂上层还多了一个工厂的工厂
+# 到底哪种才是抽象工厂的定义呢?
+class FactoryBuilder:
+    def buildFactory(self, ftype):
+        if ftype == 'a':
+            return AFactory()
+        if ftype == 'b':
+            return BFactory()
+
 
 # 2.1.3 软件工程设计模式-创建型模式-单例
+# 单例类自己创建自己唯一实例, 其他对象要用的时候判断该单例是否已存在, 存在返回没有创建
+# python里没办法把构造函数声明为私有, 所有得利用__new__, 拦截默认创建方法
+# __new__是在实例创建前被调用的, 是个静态方法, 其主要作用是创建实例并返回实例对象
+# __init__是对象创建完成后调用的, 其主要是设置对象属性的一些初始值, 是个实例方法
+class Single:
+    def __new__(cls, *args, **kwargs):
+        if not hasattr(cls, '_instance'):
+            cls._instance = super().__new__(cls)
+        return cls._instance
+
+    def __init__(self, x=None):
+        if x: self.x = x
+
+
+o1 = Single(100)
+print(id(o1), o1.x)
+o2 = Single(200)
+print(id(o2), o2.x)  # 这俩id是一样的
+o3 = Single()
+print(id(o3), o3.x)
+
 # 2.1.4 软件工程设计模式-创建型模式-建造者
+# 将一个复杂对象的构建与它的表示分离, 使得同样的构建过程可以创建不同的表示
+# 即使用多个简单的对象一步一步构建成一个复杂的对象
+# 如果将抽象工厂模式看成汽车配件生产工厂, 那么建造者模式就是一个汽车组装工厂
+# 通过对部件的组装可以返回一辆完整的汽车
+class Bike:
+    def __init__(self):
+        self.frame = None
+        self.seat = None
+
+class Frame(metaclass=ABCMeta):
+    @abstractmethod
+    def getInfo(self):
+        pass
+class AlloyFrame(Frame):
+    def getInfo(self):
+        print("alloy frame")
+class IronFrame(Frame):
+    def getInfo(self):
+        print("iron frame")
+
+class Seat(metaclass=ABCMeta):
+    @abstractmethod
+    def getInfo(self):
+        pass
+
+class WoodSeat(Seat):
+    def getInfo(self):
+        print("wood seat")
+
+class PlasticSeat(Seat):
+    def getInfo(self):
+        print("plastic seat")
+
+class Builder(metaclass=ABCMeta):
+    @abstractmethod
+    def buildFrame(self):
+        pass
+    @abstractmethod
+    def buildSeat(self):
+        pass
+
+class ForeverBuilder(Builder):
+    def __init__(self):
+        self.bike = Bike()
+
+    def buildFrame(self):
+        self.bike.frame = AlloyFrame()
+
+    def buildSeat(self):
+        self.bike.frame = PlasticSeat()
+
+    def getBike(self):
+        return self.bike
+
+class OfoBuilder(Builder):
+    def __init__(self):
+        self.bike = Bike()
+
+    def buildFrame(self):
+        self.bike.frame = IronFrame()
+
+    def buildSeat(self):
+        self.bike.frame = WoodSeat()
+
+    def getBike(self):
+        return self.bike
+
+# Director不是必须的, 直接到Builder一级就行
+# 到Builder一级的话, Builder在自己的__init__里调buildFrame和buildSeat就行
+class Director:
+    def __init__(self, btype):
+
+        if btype == 'forever':
+            self.builder = ForeverBuilder()
+        else:
+            self.builder = OfoBuilder()
+
+    def construct(self):
+        self.builder.buildFrame()
+        self.builder.buildSeat()
+        return self.builder.getBike()
+
+director = Director("forever")
+bike = director.construct()
+bike.frame.getInfo()
 # 2.1.5 软件工程设计模式-创建型模式-原型
+# 用于创建当前对象的克隆; 深拷贝用到copy
+# 目的是减少个别数据的初始化, 仅更新部分数据
+import copy
+class ProtoType:
+    def __init__(self):
+        self._objects = {}
+
+    def register(self, name, obj):
+        self._objects[name] = obj
+
+    def unregister(self, name):
+        del self._objects[name]
+
+    def clone(self, name, **kwargs):
+        obj = copy.deepcopy(self._objects.get(name))
+        obj.__dict__.update(kwargs)
+        return obj
+
+class A:
+    def __init__(self):
+        self.x = 100
+
+a = A()
+print(a.x)  # 100
+
+prototype = ProtoType()
+prototype.register('a', a)
+
+b = prototype.clone('a', x=1000, y=200)
+
+print(b.x, b.y)  # 1000, 200
 
 # 2.2.1 软件工程设计模式-结构型模式-适配器
+# 将一个类的接口转换成客户希望的另外一个接口, 使得原本由于接口不兼容而不能在一起工作的那些类可以一起工作
+# 适配方法可以在适配器里做兼容, 也可以外部传入
+class Dog:
+    def bark(self):
+        print("dog bark")
+
+    def f(self):
+        print("dog fprint")
+
+class Cat:
+    def meow(self):
+        print("cat meow")
+
+class Adapter1:
+    def __init__(self, obj):
+        self._obj = obj
+
+    def make_sound(self):
+        if isinstance(self._obj, Dog):
+            self._obj.bark()
+        if isinstance(self._obj, Cat):
+            self._obj.meow()
+dog = Dog()
+adapter = Adapter1(dog)
+adapter.make_sound()
+cat = Cat()
+adapter = Adapter1(cat)
+adapter.make_sound()
+
+# 第二种办法, 外部传
+class Adapter2:
+    def __init__(self, obj, **method_map):
+        self.obj = obj
+        self.__dict__.update(method_map)
+
+    # 注意这里要用__getattr__, 找不到时才去obj里找
+    def __getattr__(self, item):
+        return getattr(self.obj, item)
+
+dog = Dog()
+adapter = Adapter2(dog, make_sound=dog.bark)
+adapter.make_sound()
+adapter.f()
+
 # 2.2.2 软件工程设计模式-结构型模式-装饰器
+# 有点像mixin, 给类添加功能组件, 区别于descriptor/property
+# 不过和mixin也是有点区别的, 装饰器是直接写, 而mixin是先把装饰的部分独立成组件类, 然后再混入
+
+class A:
+    def __init__(self):
+        self.x = 100
+
+# 装饰器
+class KeyDecorator:
+    def __init__(self, obj):
+        self._obj = obj
+
+    def __getitem__(self, item):
+        return self._obj.__dict__.get(item)
+
+    def __getattr__(self, item):
+        return getattr(self._obj, item)
+
+a = A()
+key_decorator = KeyDecorator(a)
+print(a.x, key_decorator.x, key_decorator['x'])
+
+# mixin
+# 感觉装饰器像是临时附魔, 比如这次赋予武器暴击效果
+# mixin则是直接创造一种新的自带暴击效果的武器类型
+class ComponentKey:
+    def __getitem__(self, item):
+        return self.__dict__.get(item)
+
+class MixinA(A, ComponentKey):
+    pass
+
+a = MixinA()
+print(a.x, a['x'])
+
+
 # 2.2.3 软件工程设计模式-结构型模式-代理
 # 2.2.4 软件工程设计模式-结构型模式-外观
 # 2.2.5 软件工程设计模式-结构型模式-桥接
