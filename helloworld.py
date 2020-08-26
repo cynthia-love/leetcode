@@ -1,6 +1,7 @@
 
 
-s = [1, 2, 3]*3
-print(s)
-s[1] = 100
-print(s)
+def f():
+    pass
+
+print(callable(f))
+print(type(f) == 'function')

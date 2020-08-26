@@ -424,7 +424,7 @@ f9()
 
 
 """软件工程设计模式"""
-# 2.1.1 软件工程设计模式-创建型模式-工厂
+# 2.1.1 软件工程设计模式-创建型模式-工厂, Factory Method
 # 简单工厂, 创建一个工厂类, 用于实例化对象
 # 简单工厂生产模式固定, 比如一共三种产品
 # 某工厂生产两种, 那这个两种就固定了, 即createPizza方法固定, 可以理解为生产线
@@ -490,7 +490,7 @@ pizza = factory.createPizza("greek")
 pizza.prepare()
 
 
-# 2.1.2 软件工程设计模式-创建型模式-抽象工厂
+# 2.1.2 软件工程设计模式-创建型模式-抽象工厂, Abstract Factory
 # 抽象工厂, 在工厂的基础上在进一步抽象, 不仅可以自定义单个产品系列的产品线
 # 还可以支持增加其他产品系列的产品线
 # 比如不光有三种pizza, 还有三种馅饼, fruit, bean, veg
@@ -571,7 +571,7 @@ class FactoryBuilder:
             return BFactory()
 
 
-# 2.1.3 软件工程设计模式-创建型模式-单例
+# 2.1.3 软件工程设计模式-创建型模式-单例, Singleton
 # 单例类自己创建自己唯一实例, 其他对象要用的时候判断该单例是否已存在, 存在返回没有创建
 # python里没办法把构造函数声明为私有, 所有得利用__new__, 拦截默认创建方法
 # __new__是在实例创建前被调用的, 是个静态方法, 其主要作用是创建实例并返回实例对象
@@ -582,6 +582,10 @@ class Single:
             cls._instance = super().__new__(cls)
         return cls._instance
 
+    # 这里是在init里给实例变量赋值还是在new里直接赋值
+    # 看新的o=Single(xxx)是否要改变变量的值
+    # 如果要变, 建议写__init__函数, 不变, 直接在new里赋值
+    # 当然, 变这种情况也是能在new里赋值的, 取到原对象后改变变量值就是
     def __init__(self, x=None):
         if x: self.x = x
 
@@ -593,7 +597,7 @@ print(id(o2), o2.x)  # 这俩id是一样的
 o3 = Single()
 print(id(o3), o3.x)
 
-# 2.1.4 软件工程设计模式-创建型模式-建造者
+# 2.1.4 软件工程设计模式-创建型模式-建造者, Builder
 # 将一个复杂对象的构建与它的表示分离, 使得同样的构建过程可以创建不同的表示
 # 即使用多个简单的对象一步一步构建成一个复杂的对象
 # 如果将抽象工厂模式看成汽车配件生产工厂, 那么建造者模式就是一个汽车组装工厂
@@ -679,7 +683,7 @@ class Director:
 director = Director("forever")
 bike = director.construct()
 bike.frame.getInfo()
-# 2.1.5 软件工程设计模式-创建型模式-原型
+# 2.1.5 软件工程设计模式-创建型模式-原型, Prototype
 # 用于创建当前对象的克隆; 深拷贝用到copy
 # 目的是减少个别数据的初始化, 仅更新部分数据
 import copy
@@ -712,7 +716,7 @@ b = prototype.clone('a', x=1000, y=200)
 
 print(b.x, b.y)  # 1000, 200
 
-# 2.2.1 软件工程设计模式-结构型模式-适配器
+# 2.2.1 软件工程设计模式-结构型模式-适配器, Adapter
 # 将一个类的接口转换成客户希望的另外一个接口, 使得原本由于接口不兼容而不能在一起工作的那些类可以一起工作
 # 适配方法可以在适配器里做兼容, 也可以外部传入
 class Dog:
@@ -757,7 +761,7 @@ adapter = Adapter2(dog, make_sound=dog.bark)
 adapter.make_sound()
 adapter.f()
 
-# 2.2.2 软件工程设计模式-结构型模式-装饰器
+# 2.2.2 软件工程设计模式-结构型模式-装饰器, Decorator
 # 有点像mixin, 给类添加功能组件, 区别于descriptor/property
 # 不过和mixin也是有点区别的, 装饰器是直接写, 而mixin是先把装饰的部分独立成组件类, 然后再混入
 
@@ -794,23 +798,231 @@ a = MixinA()
 print(a.x, a['x'])
 
 
-# 2.2.3 软件工程设计模式-结构型模式-代理
-# 2.2.4 软件工程设计模式-结构型模式-外观
-# 2.2.5 软件工程设计模式-结构型模式-桥接
-# 2.2.6 软件工程设计模式-结构型模式-组合
-# 2.2.7 软件工程设计模式-结构型模式-享元
+# 2.2.3 软件工程设计模式-结构型模式-代理, Proxy
+# 一个类代表另一个类的功能, 不直接使用目标对象, 而是通过A使用B
+import time
+class SalesManager:
+    def work(self):
+        print("sales manager working")
+    def talk(self):
+        print("sales manager talking")
 
-# 2.3.1 软件工程设计模式-行为型模式-策略
-# 2.3.2 软件工程设计模式-行为型模式-模板
-# 2.3.3 软件工程设计模式-行为型模式-观察者
-# 2.3.4 软件工程设计模式-行为型模式-访问者
-# 2.3.5 软件工程设计模式-行为型模式-中介者
-# 2.3.6 软件工程设计模式-行为型模式-迭代器
-# 2.3.7 软件工程设计模式-行为型模式-责任链
-# 2.3.8 软件工程设计模式-行为型模式-命令
-# 2.3.9 软件工程设计模式-行为型模式-备忘录
-# 2.3.10 软件工程设计模式-行为型模式-状态
-# 2.3.11 软件工程设计模式-行为型模式-解释器
+class Proxy:
+    def __init__(self):
+        self.busy = 'No'
+        self.sale = None
+    def work(self):
+        print("Proxy checking for sales manager availability")
+        if self.busy == 'No':
+            self.sale = SalesManager()
+            time.sleep(0.2)
+            self.sale.talk()
+        else:
+            time.sleep(0.2)
+            print("sales manager is busy")
+
+p = Proxy()
+p.work()
+p.busy = 'Yes'
+p.work()
+
+# 2.2.4 软件工程设计模式-结构型模式-外观, Facade
+# 为子系统中的一组接口提供一个一致的界面, 比如pygame里的group?
+class TC1:
+    def run(self):
+        print("running TC1")
+
+class TC2:
+    def run(self):
+        print("running TC2")
+
+class Facade:
+    def __init__(self):
+        self.tc1 = TC1()
+        self.tc2 = TC2()
+        self.tcs = [self.tc1, self.tc2]
+
+    def runAll(self):
+        for each in self.tcs: each.run()
+
+f = Facade()
+f.runAll()
+
+
+# 2.2.5 软件工程设计模式-结构型模式-桥接, Bridge
+# 将抽象部分与实现部分分离, 使它们都可以独立地变化
+# 感觉有点像适配器的第二种实现, 都是外传一些方法, 以实现动态绑定
+class DrawAPI1:
+    def draw(self):
+        print("api1 draw circle")
+
+class DrawAPI2:
+    def draw(self):
+        print("api2 draw circle")
+
+class DrawCircle:
+    def __init__(self, draw_api):
+        self.draw_api = draw_api
+
+    def draw(self):
+        self.draw_api.draw()
+
+dc = DrawCircle(DrawAPI1())
+dc.draw()
+
+# 2.2.6 软件工程设计模式-结构型模式-组合, Composite
+# 区别于fishc里提到的类的组合, 那个仅仅只是一个类里的变量类型是自定义类类型
+# 而这里的组合要求更高, 一个类兼具部分整体的特性,依据树形结构来组合对象
+class Employee:
+    def __init__(self, name, pos):
+        self.name = name
+        self.pos = pos
+        # 这里children列表的元素类型是Employee本身
+        self.children = []
+
+    def add(self, obj):
+        self.children.append(obj)
+
+    def remove(self, obj):
+        self.children.remove(obj)
+
+    def getChildren(self):
+        return self.children
+
+    def __str__(self):
+        return "Name: {}, Pos: {}".format(self.name, self.pos)
+
+ceo = Employee("John", "CEO")
+headSale = Employee("Robert", "Head Sale")
+headMarket = Employee("Michel", 'Head Market')
+ceo.add(headSale)
+ceo.add(headMarket)
+
+sale1 = Employee("Jim", "Sale")
+sale2 = Employee("Lucy", "Sale")
+headSale.add(sale1)
+headSale.add(sale2)
+
+market1 = Employee("Tom", "Market")
+market2 = Employee("Eric", "Market")
+headMarket.add(market1)
+headMarket.add(market2)
+
+def rf(obj):
+    if not obj:
+        return
+    print(obj)
+    for each in obj.getChildren():
+        rf(each)
+rf(ceo)
+# 2.2.7 软件工程设计模式-结构型模式-享元, Flyweight
+# 进阶版的单例模式, 只不过是多个(类似单例, 可以通过获取对象方法实现, 也可以改写__new__)
+# 如果有相同的业务请求, 则尝试重用现有的同类对象, 如果未找到则创建
+# 至于存储对象列表有两种办法, 一种是dict强映射, 一种是用weakref弱映射
+# weakref与dict类似, 只不过dict里的对象会保持存活, 而weakref里的映射对象
+# 如果没有其他强引用时, 垃圾回收机制可以回收该对象并将其在弱映射对象中相应的条目删除
+
+# 第一种实现方式
+class Circle:
+    def __init__(self, color):
+        self.color = color
+
+    def draw(self):
+        print("draw circle with color {}".format(self.color))
+
+# 其实这里没必要用简单工厂, 因为只有一种类, 只是color取值不同而已
+# 可以直接把对象dict存到Circle的类变量里去
+class CircleFactory:
+    def __init__(self):
+        self.circles = {}
+
+    def getCircle(self, color):
+        if color in self.circles:
+            return self.circles.get(color)
+        else:
+            circle = Circle(color)
+            self.circles[color] = circle
+            return circle
+
+cf = CircleFactory()
+c1 = cf.getCircle("red")
+c1.draw()
+c2 = cf.getCircle("blue")
+c2.draw()
+c3 = cf.getCircle("red")
+print(c1 is c3)
+
+import weakref
+# 第二种实现方式, 改写__new__, 并尝试用一下weakref
+# 注意如果有多种类对象, 那这里就不能直接在原对象上改写了, 得单独出来个factory改写
+class Shape:
+    _pool = weakref.WeakValueDictionary()
+
+    def __new__(cls, color):
+        if color in cls._pool:
+            return cls._pool.get(color)
+        else:
+            obj = super().__new__(cls)
+            cls._pool[color] = obj
+            obj.color = color
+            return obj
+
+    def getColor(self):
+        print(self.color)
+    # 这里不要写init了, init里无法判断是老对象还是新创建的对象
+    # 会导致重复操作, 不如直接在new里赋值
+    # def __init__(self, color):
+        # self.color = color
+
+s = Shape("yellow")
+s2 = Shape("blue")
+s3 = Shape("yellow")
+print(id(s), id(s2), id(s3))
+
+# 2.3.1 软件工程设计模式-行为型模式-策略, Strategy
+# 定义一系列的算法, 把他们一个个封装起来, 并且使它们可以互相替换
+# 比如sort时的key值函数?
+# 这里的算法支持类内定义, 也可以外部传
+import types
+class Strategy:
+    def __init__(self, strategy):
+        self.execute = self.s
+        if strategy == 's1':
+            self.execute = self.s1
+        if strategy == 's2':
+            self.execute = self.s2
+        # types.MethodType(f, obj)可以把外部方法绑定到对象上
+        if callable(strategy):
+            self.execute = types.MethodType(strategy, self)
+            # 也可以这么写
+            # self.execute = lambda :strategy(self)
+
+    def s(self):
+        print("缺省算法")
+    def s1(self):
+        print("内置算法1")
+
+    def s2(self):
+        print('内置算法2')
+
+def sout(self):
+    print("外部绑定", self)
+
+s = Strategy("s1")
+s.execute()
+s = Strategy(sout)
+s.execute()
+
+# 2.3.2 软件工程设计模式-行为型模式-模板, Template
+# 2.3.3 软件工程设计模式-行为型模式-观察者, Observer
+# 2.3.4 软件工程设计模式-行为型模式-访问者, Visitor
+# 2.3.5 软件工程设计模式-行为型模式-中介者, Mediator
+# 2.3.6 软件工程设计模式-行为型模式-迭代器, Iterator
+# 2.3.7 软件工程设计模式-行为型模式-责任链, Chain of Responsibility
+# 2.3.8 软件工程设计模式-行为型模式-命令, Command
+# 2.3.9 软件工程设计模式-行为型模式-备忘录, Memento
+# 2.3.10 软件工程设计模式-行为型模式-状态, State
+# 2.3.11 软件工程设计模式-行为型模式-解释器, Interpreter
 
 
 
