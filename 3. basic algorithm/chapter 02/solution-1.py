@@ -1017,8 +1017,160 @@ s = Strategy(sout)
 s.execute()
 
 # 2.3.2 软件工程设计模式-行为型模式-模板, Template
+# 一个抽象类公开定义了执行它的方法的方式/模板, 子类可以按需要重写方法实现, 但调用将以抽象类中定义的方式进行
+# 即比普通的抽象类多定义了点东西, 制定了一个算法的框架, 子类可以可以重写该算法的各个部分
+# 利用抽象类特性, 制定顶层逻辑框架, 将逻辑的细节以抽象方法的形式强制子类去实现
+class SortTemplate(metaclass=ABCMeta):
+    def __init__(self):
+        self.l = [4, 3, 2, 1]
+
+    @abstractmethod
+    def sort(self):
+        pass
+    @abstractmethod
+    def fout(self):
+        pass
+
+    # 模板里定义了算法的框架, 但对于算法的某些关键步骤, 采用的是抽象方法, 需要子类去实现
+    def play(self):
+        self.sort()
+        self.fout()
+
+class MySort(SortTemplate):
+    def sort(self):
+        print("开始排序")
+    def fout(self):
+        print(self.l)
+
+ms = MySort()
+ms.play()
 # 2.3.3 软件工程设计模式-行为型模式-观察者, Observer
-# 2.3.4 软件工程设计模式-行为型模式-访问者, Visitor
+# 当一个对象被修改时, 自动通知依赖它的对象, 而并不知道有多少依赖它, 有点像react里的state
+class Subject:
+    def __init__(self):
+        self._observers = []
+
+    def attach(self, observer):
+        if observer not in self._observers:
+            self._observers.append(observer)
+
+    def detach(self, observer):
+        if observer in self._observers:
+            self._observers.remove(observer)
+
+    def notify(self):
+        for each in self._observers:
+            each.update(self)
+
+# Target其实可以和Subject合并成一个类, 不过为了避免重写Subject, 一般不放一块
+class Target(Subject):
+    def __init__(self):
+        super().__init__()
+        self._data = 8
+
+    def getData(self):
+        return self._data
+
+    def setData(self, value):
+        self._data = value
+        self.notify()
+
+    data = property(getData, setData)
+
+class DataChangeObserver:
+    def update(self, target):
+        print("检测到目标值改动", target.data)
+
+class DataZeroObserver:
+    def update(self, target):
+        if target.data == 0:
+            print("警告, data值变成0了")
+# 可以添加多个observer, 以针对不同的改动进行不同的处理
+t = Target()
+t.attach(DataChangeObserver())
+t.attach(DataZeroObserver())
+print(t.data)
+t.data = 100
+t.data = 0
+
+# 2.3.4 软件工程设计模式-行为型模式-访问者, Visitor, 最复杂的设计模式
+# 元素对象接受访问者对象, 从而访问者对象可以处理元素对象上的操作, 主要是为了将数据结构和数据操作分离
+# 适用场景: 对象结构比较稳定, 但经常需要在对象上定义新的操作, 不希望这些操作污染原对象的类
+# visitor, 抽象类, 定义对每个element的访问行为, 有几个元素就有几个方法, 所以该模式要求元素结构不经常改变
+# concretevisitor, 具体的访问者
+# element, 元素抽象类, 定义了一个接受访问者的方法
+# elementA, elementB, 具体的元素类
+# objectstructure, 定义对象结构, 并且可以迭代这些元素提供访问者访问
+
+# 示例, 员工分为工程师和经理, 年终考核CEO和CTO分别关注不同方面, CTO关注工程师代码量, 经理的新产品数量
+# CEO关注工程师的KPI和经理的KPI以及新产品数量
+# element
+import random
+class Staff(metaclass=ABCMeta):
+    def __init__(self, name):
+        self.name = name
+        self.kpi = random.randint(1, 10)
+
+    def accept(self, visitor):
+        pass
+
+# elementA
+class Engineer(Staff):
+    def __init__(self, name):
+        super().__init__(name)
+        self.code = random.randint(1, 100000)
+
+    def accept(self, visitor):
+        visitor.visit(self)
+
+# elementB
+class Manager(Staff):
+    def __init__(self, name):
+        super().__init__(name)
+        self.product = random.randint(1, 10)
+
+    def accept(self, visitor):
+        visitor.visit(self)
+
+# object structure
+class BusinessReport:
+    def __init__(self):
+        self.staffs = []
+        self.staffs.append(Manager("经理-A"))
+        self.staffs.append(Engineer("工程师-A"))
+        self.staffs.append(Engineer("工程师-B"))
+        self.staffs.append(Manager("经理-B"))
+        self.staffs.append(Engineer("工程师-C"))
+
+    def showReport(self, visitor):
+        for each in self.staffs:
+            each.accept(visitor)
+
+class Visitor(metaclass=ABCMeta):
+    def visit(self, staff):
+        pass
+
+# python里没有重载, 没办法写俩visit, 如果elementA和elementB有各自个性化的东西, 就不好办了
+class CEOVisitor(Visitor):
+    def visit(self, staff):
+        if isinstance(staff, Manager):
+            print("经理: {}, KPI: {}, 产品数量: {}".format(staff.name, staff.kpi, staff.product))
+        if isinstance(staff, Engineer):
+            print("工程师: {}, KPI: {}".format(staff.name, staff.kpi))
+
+class CTOVisitor(Visitor):
+    def visit(self, staff):
+        if isinstance(staff, Manager):
+            print("经理: {}, 产品数量: {}".format(staff.name, staff.product))
+        if isinstance(staff, Engineer):
+            print("工程师: {}, 代码量: {}".format(staff.name, staff.code))
+
+report = BusinessReport()
+print("=====CEO报表=====")
+report.showReport(CEOVisitor())
+print("=====CTO报表=====")
+report.showReport(CTOVisitor())
+
 # 2.3.5 软件工程设计模式-行为型模式-中介者, Mediator
 # 2.3.6 软件工程设计模式-行为型模式-迭代器, Iterator
 # 2.3.7 软件工程设计模式-行为型模式-责任链, Chain of Responsibility
