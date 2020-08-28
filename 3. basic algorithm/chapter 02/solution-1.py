@@ -1536,6 +1536,7 @@ class BookFactory:
 bf = BookFactory()
 bf.createBook(1).show()
 bf.createBook(-1).show()
+
 # 补充3, MVC模式
 
 # 补充4, 业务代表模式
