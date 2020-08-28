@@ -1,7 +1,13 @@
 
 
 def f():
-    pass
+    yield 1
+    yield 2
 
-print(callable(f))
-print(type(f) == 'function')
+x = f()
+y = iter(x)
+
+print("aaaa".find("b"))
+print("" in "aaa")
+if "":
+    print("haha")

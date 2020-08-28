@@ -1172,14 +1172,382 @@ print("=====CTO报表=====")
 report.showReport(CTOVisitor())
 
 # 2.3.5 软件工程设计模式-行为型模式-中介者, Mediator
+# 降低多个对象和类之间的通信复杂性, 并支持松耦合
+class ChatRoom:
+    @staticmethod
+    def send(user, message):
+        print("[{}]: {}".format(user.name, message))
+
+class User:
+    def __init__(self, name):
+        self.name = name
+
+    def sendMessage(self, message):
+        ChatRoom.send(self, message)
+
+robert = User("Robert")
+john = User("John")
+
+robert.sendMessage("hi, John~")
+john.sendMessage("Nice to meet you too")
+
 # 2.3.6 软件工程设计模式-行为型模式-迭代器, Iterator
+# 两种方式, 传统方式和用yield方式(即generator), 推荐后者
+class Iterator(metaclass=ABCMeta):
+
+    def hasNext(self) -> bool:
+        return
+
+    def next(self) -> object:
+        pass
+
+
+class MyClass(Iterator):
+    def __init__(self):
+        self.l = [8, 100, 7, 2, 0]
+        self.i = 0
+
+    def hasNext(self) -> bool:
+        if self.i < len(self.l):
+            return True
+        return False
+
+    def next(self) -> object:
+        self.i += 1
+        return self.l[self.i-1]
+
+m = MyClass()
+while m.hasNext():
+    print(m.next())
+
+# 或者更简单的方式
+class MyGenerator:
+
+    def __init__(self):
+        self.l = [8, 100, 7, 2, 0]
+
+    def generator(self):
+        for each in self.l:
+            yield each
+
+mg = MyGenerator()
+for each in mg.generator():
+    print(each)
+
 # 2.3.7 软件工程设计模式-行为型模式-责任链, Chain of Responsibility
+# 为请求创造一个接受者的对象的链, 如果一个对象不能处理该请求, 那么它会把相同的请求传给下一个接收者
+class ChainHandler:
+    def nextHandler(self, obj):
+        self.next_handler = obj
+
+class Handler1(ChainHandler):
+    def handle(self, request):
+        if 0 < request <= 10:
+            print("in handle1")
+        else:
+            self.next_handler.handle(request)
+
+class Handler2(ChainHandler):
+    def handle(self, request):
+        if 10 < request <= 20:
+            print("in handle2")
+        else:
+            self.next_handler.handle(request)
+
+class Handler3(ChainHandler):
+    def handle(self, request):
+        if 20 < request <= 30:
+            print("in handle3")
+        else:
+            print("end of chain")
+
+h1 = Handler1()
+h2 = Handler2()
+h3 = Handler3()
+h1.nextHandler(h2)
+h2.nextHandler(h3)
+
+request = [2, 5, 14, 40, 22, 18, 3, 35]
+for each in request:
+    h1.handle(each)
 # 2.3.8 软件工程设计模式-行为型模式-命令, Command
+# 请求以命令的形式包裹在对象中, 并传给调用对象, 调用对象寻找可以处理该命令的合适的对象, 并把
+# 该命令传给相应的对象
+class Stock:
+    def __init__(self):
+        self.name = 'abc'
+        self.quantity = 10
+
+    def buy(self):
+        print("Stock {} bought with quantity {}".format(self.name, self.quantity))
+
+    def sell(self):
+        print("Stock {} sold with quantity {}".format(self.name, self.quantity))
+
+# 命令这里封装一层是为了Broker里可以统一行为
+class Order(metaclass=ABCMeta):
+    @abstractmethod
+    def execute(self):
+        pass
+
+class Order1(Order):
+    def __init__(self, block: Stock):
+        self.block = block
+
+    def execute(self):
+        self.block.buy()
+
+class Order2(Order):
+    def __init__(self, block: Stock):
+        self.block = block
+
+    def execute(self):
+        self.block.sell()
+
+# 命令调度器, 经纪人
+class Broker:
+    def __init__(self):
+        self.order_list = []
+
+    def addOrder(self, order: Order):
+        self.order_list.append(order)
+
+    def executeOrders(self):
+        for each in self.order_list:
+            each.execute()
+        self.order_list.clear()
+
+stock = Stock()
+order1 = Order1(stock)
+order2 = Order2(stock)
+
+broker = Broker()
+broker.addOrder(order1)
+broker.addOrder(order2)
+
+broker.executeOrders()
+
 # 2.3.9 软件工程设计模式-行为型模式-备忘录, Memento
-# 2.3.10 软件工程设计模式-行为型模式-状态, State
+# 保存一个对象的某个状态, 以便在适当的时候恢复对象, 有点像undo, redo
+import copy
+class Memento:
+    def __init__(self, obj: object, deep=False):
+        self.state = (copy.copy, copy.deepcopy)[deep](obj.__dict__)
+
+    def getState(self):
+        return self.state
+
+# 管理多个Memento
+class CareTaker:
+    def __init__(self):
+        self.memento_list = []
+
+    def add(self, memento: Memento):
+        self.memento_list.append(memento)
+
+    def get(self, index: int):
+        return self.memento_list[index]
+
+class Originator:
+    def __init__(self, x):
+        self.x = x
+
+    def getMemento(self):
+        return Memento(self)
+
+    # 如果在Originator里restore, 那Memento里其实没必要存obj了
+    # 只存个obj.__dict__就行
+    def restoreFromMemento(self, memento: Memento):
+
+        self.__dict__.clear()
+        self.__dict__.update(memento.getState())
+
+caretaker = CareTaker()
+
+originator = Originator("state 1")
+caretaker.add(originator.getMemento())
+
+originator.x = "state 2"
+caretaker.add(Memento(originator))  # 两种获取memento的写法都行
+
+print(originator.x)  # state 2
+
+originator.restoreFromMemento(caretaker.get(0))
+print(originator.x)  # state 1
+
+
+# 2.3.10 软件工程设计模式-行为型模式-状态, State ( Context )
+# 在状态模式中, 类的行为是基于它的状态而改变的, 我们创建表示各种状态的对象和一个行为
+# 随着状态对象改变而改变的context对象(后台接口一般采用这种模式, 共享上下文)
+
+# context感觉不用外面传, 用单例模式, doAction里面自己获取就行
+class State(metaclass=ABCMeta):
+    def doAction(self, context):
+        pass
+
+class StartState(State):
+    def doAction(self, context):
+        print("state is start")
+        context.setState(self)
+
+class StopState(State):
+    def doAction(self, context):
+        print("state is stop")
+        context.setState(self)
+
+class Context:
+    def __init__(self):
+        self.state = None
+
+    def setState(self, state: State):
+        self.state = state
+
+    def getState(self):
+        return self.state
+
+context = Context()
+
+start = StartState()
+start.doAction(context)
+print(context.getState())
+
+stop = StopState()
+stop.doAction(context)
+print(context.getState())
+
 # 2.3.11 软件工程设计模式-行为型模式-解释器, Interpreter
+# 实现一个表达式接口, 该接口解释一个特定的上下文, 常用于SQL解析, 运算符表达式, 编译器等
+class Expression:
+    def interpret(self, s: str):
+        pass
 
+class VarExpression(Expression):
+    def __init__(self, key):
+        self.key = key
 
+    def interpret(self, d: dict):
+        return d.get(self.key)
 
+class AddExpression(Expression):
+    def __init__(self, expr1: VarExpression, expr2: VarExpression):
+        self.expr1 = expr1
+        self.expr2 = expr2
 
+    def interpret(self, d: dict):
+        return self.expr1.interpret(d) + self.expr2.interpret(d)
 
+v1 = VarExpression("x")
+v2 = VarExpression("y")
+d = {"x": 100, "y": 200}
+
+print(v1.interpret(d))
+
+a1 = AddExpression(v1, v2)
+print(a1.interpret(d))
+
+# 补充1, 过滤器模式
+# 使用不同的标准过滤一组对象, 通过逻辑运算以解耦的方式把它们连接起来, 将多个标准结合成一个标准
+# 感觉和解释器模式有种神似
+
+from typing import *
+class Person:
+    def __init__(self, name, gender, age):
+        self.name = name
+        self.gender = gender
+        self.age = age
+
+class Criteria(metaclass=ABCMeta):
+    def check(self, persons: List[Person]) -> List[Person]:
+        pass
+
+class MaleCriteria(Criteria):
+    def check(self, persons: List[Person]) -> List[Person]:
+        l = []
+        for each in persons:
+            if each.gender == 'MALE':
+                l.append(each)
+
+        return l
+
+class AgeCriteria(Criteria):
+    def check(self, persons: List[Person]) -> List[Person]:
+        l = []
+        for each in persons:
+            if each.age >= 18:
+                l.append(each)
+        return l
+
+class AndCriteria(Criteria):
+    def __init__(self, c1: Criteria, c2: Criteria):
+        self.c1 = c1
+        self.c2 = c2
+
+    def check(self, persons: List[Person]) -> List[Person]:
+        return self.c2.check(self.c1.check(persons))
+
+persons = list()
+persons.append(Person("AAA", "MALE", 30))
+persons.append(Person("BBB", "FEMALE", 13))
+persons.append(Person("CCC", "FEMALE", 30))
+persons.append(Person("DDD", "MALE", 8))
+persons.append(Person("EEE", "MALE", 30))
+
+c1 = MaleCriteria()
+c2 = AgeCriteria()
+c3 = AndCriteria(c1, c2)
+
+print([e.name for e in c1.check(persons)])
+print([e.name for e in c2.check(persons)])
+print([e.name for e in c3.check(persons)])
+
+# 补充2, 空对象模式
+# 一般情况下, 用o==None判断空对象, 但有时候我们希望在这种情况下能做一些自定义操作
+class Book(metaclass=ABCMeta):
+    def isNone(self):
+        pass
+    def show(self):
+        pass
+
+class NormalBook(Book):
+    def __init__(self, id, name):
+        self.id = id
+        self.name = name
+
+    def isNone(self):
+        return False
+
+    def show(self):
+        print("图书编号: {}, 书名: {}".format(self.id, self.name))
+
+class NoneBook(Book):
+    def isNone(self):
+        return True
+
+    def show(self):
+        print("无效的图书信息!!!")
+
+class BookFactory:
+    def createBook(self, id):
+        if id == 1:
+            return NormalBook(1, "图书1")
+        if id == 2:
+            return NormalBook(2, "图书2")
+        return NoneBook()
+bf = BookFactory()
+bf.createBook(1).show()
+bf.createBook(-1).show()
+# 补充3, MVC模式
+
+# 补充4, 业务代表模式
+
+# 补充5, 组合实体模式
+
+# 补充6, 数据访问对象模式DAO
+
+# 补充7, 前端控制器模式
+
+# 补充8, 拦截过滤器模式
+
+# 补充9, 服务定位器模式
+
+# 补充10, 传输对象模式
