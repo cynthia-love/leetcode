@@ -1538,16 +1538,240 @@ bf.createBook(1).show()
 bf.createBook(-1).show()
 
 # 补充3, MVC模式
+# Model-View-Controller
+# Model存取数据, View代表模型包含的数据的可视化, Controller控制数据流向Model, 并在数据变化时更新View
+class StudentModel:
+    def __init__(self):
+        self.no = None
+        self.name = None
+
+class StudentView:
+    def printInfo(self, no, name):
+        print("Student {}: {}".format(no, name))
+
+class StudentController:
+    def __init__(self, model, view):
+        self.model = model
+        self.view = view
+
+    def setName(self, value):
+        self.model.name = value
+
+    def getName(self):
+        return self.model.name
+
+    def setNo(self, value):
+        self.model.value = value
+
+    def getNo(self):
+        return self.model.value
+
+    def showView(self):
+        self.view.printInfo(self.getNo(), self.getName())
+
+# 并不直接操作model和view, 由控制器统一安排
+controller = StudentController(StudentModel(), StudentView())
+controller.setNo("00158")
+controller.setName("Lucy")
+controller.showView()
 
 # 补充4, 业务代表模式
+# 用于对表示层和业务层解耦
+# 业务代表Business Delegate, 提供对业务服务方法的访问
+# 业务服务Business Service, 实现了业务服务的实体类
+# 查询服务LookUp Service, 业务代表用它来查找实际的服务类
+class BusinessService(metaclass=ABCMeta):
+    def doProcessing(self):
+        pass
 
-# 补充5, 组合实体模式
+class EJBBusinessService(BusinessService):
+    def doProcessing(self):
+        print("processing task by invoking ejb service")
 
-# 补充6, 数据访问对象模式DAO
+class JMSBusinessService(BusinessService):
+    def doProcessing(self):
+        print("processing task by invoking jms service")
 
-# 补充7, 前端控制器模式
+# 感觉BusinessLookUp跟工厂模式似的
+# LookUp已经能定位到Service了, 还有必要再在外面包一层业务代表吗...
+class BusinessLookUp:
+    @staticmethod
+    def getBusinessService(type):
+        if type == "EJB":
+            return EJBBusinessService()
+        else:
+            return JMSBusinessService()
 
-# 补充8, 拦截过滤器模式
+class BusinessDelegate:
+    def __init__(self, type):
+        self._businesslookup = BusinessLookUp()
+        self._type = type
+        self.business_service = self._businesslookup.getBusinessService(self._type)
+
+    def setType(self, type):
+        self._type = type
+        self.business_service = self._businesslookup.getBusinessService(self._type)
+
+    def doTask(self):
+        self.business_service.doProcessing()
+
+business_delegate = BusinessDelegate("EJB")
+business_delegate.doTask()
+
+business_delegate.setType('JMS')
+business_delegate.doTask()
+
+# 补充5, 组合实体模式, Composite Entity Pattern
+# 用在EJB持久化机制中,一个组合实体是一个EJB实体bean,代表了对象的图解. 当更新一个组合实体时,
+# 内部依赖对象beans会自动更新, 因为它们是由EJB实体bean管理的
+# 所谓EJB, enterprise java beans, 就是把你编写的软件中那些需要执行指定任务的类, 不放到客户端
+# 软件上, 而是给他打包放到一个服务器上.
+# 组合实体模式包含这么几个部分:
+# 组合实体, composite entity, 主要的实体bean
+# 粗粒度对象, coarse-grained object, 包含依赖对象, 有自己的生命周期, 也能管理依赖对象的生命周期
+# 依赖对象, dependent object, 一个生命周期依赖于粗粒度对象的依赖对象, 作为粗粒度对象中变量的类型
+# 策略, Strategies, 表示如何实现组合实体
+
+class DependentObject1:
+    def __init__(self):
+        self.data = None
+
+class DependentObject2:
+    def __init__(self):
+        self.data = None
+
+# 创建粗粒度对象, 其将多个依赖对象组合到一起
+class CoarseGrainedObject:
+    def __init__(self):
+        self.do1 = DependentObject1()
+        self.do2 = DependentObject2()
+
+    def setData(self, d1, d2):
+        self.do1.data = d1
+        self.do2.data = d2
+
+    def getData(self):
+        return self.do1.data, self.do2.data
+
+# 创建组合实体CompositeEntity, 没看出来有啥用, 只是在粗粒度对象上面又封装了一层
+class CompositeEntity:
+    def __init__(self):
+        self.cgo = CoarseGrainedObject()
+
+    def setData(self, d1, d2):
+        self.cgo.setData(d1, d2)
+
+    def getData(self):
+        return self.cgo.getData()
+
+class Client:
+    def __init__(self):
+        self.composite_entity = CompositeEntity()
+
+    def setData(self, d1, d2):
+        self.composite_entity.setData(d1, d2)
+
+    def printData(self):
+        for each in self.composite_entity.getData():
+            print("Data: {}".format(each))
+
+c = Client()
+c.setData("haha", "cccc")
+c.printData()
+# 补充6, 数据访问对象模式DAO, Data Access Object Pattern
+# 用于把低级的数据访问API从高级的业务服务中分离出来, 包括
+# 数据访问对象抽象类, Data Access Object ABC
+# 数据访问对象是体力, Data Access Object concrete class, 负责从数据源获取数据
+# 模型对象, Model Object / Value Object, 包含get/set方法来存储通过DAO类检索到的数据
+class StudentModel:
+    def __init__(self, no, name):
+        self.no = no
+        self.name = name
+
+class StudentDAO:
+    def getStudent(self, no):
+        pass
+    def getAllStudents(self):
+        pass
+    def addStudent(self, student):
+        pass
+    def deleteStudent(self, student):
+        pass
+
+class StudentDAOImpl(StudentDAO):
+    def __init__(self):
+        self.students = []
+
+    def getStudent(self, no):
+        for each in self.students:
+            if each.no == no:
+                return each
+
+    def getAllStudents(self):
+        return self.students
+
+    def addStudent(self, student):
+        self.students.append(student)
+
+    def deleteStudent(self, student):
+        self.students.remove(student)
+
+studentdao = StudentDAOImpl()
+studentdao.addStudent(StudentModel(0, "aaa"))
+studentdao.addStudent(StudentModel(1, "bbb"))
+
+for each in studentdao.getAllStudents():
+    print(each.no, each.name)
+
+student = studentdao.getStudent(0)
+student.name = "ccc"
+
+# 补充7, 前端控制器模式, Front Controller Pattern
+# 用来提供一个集中的请求处理机制, 所有的请求都将由一个单一的处理程序处理, 从而便于跟踪, 认证, 授权等
+# 前端控制器, Front Controller, 处理应用程序所有类型请求的单个处理程序
+# 调度器, Dispatcher, 前端控制器可能使用一个调度器对象来调度请求到相应的具体处理程序, 或者直接自己就调度了
+# 视图, View, 为请求而创建的对象
+class HomeView:
+    def show(self):
+        print("display home page")
+
+class StudentView:
+    def show(self):
+        print("display student page")
+
+class Dispatcher:
+    def __init__(self):
+        self.home_view = HomeView()
+        self.student_view = StudentView()
+
+    def dispatch(self, request: str):
+        if request.upper() == "STUDENT":
+            self.student_view.show()
+        else:
+            self.home_view.show()
+
+class FrontController:
+    def __init__(self):
+        self.dispatcher = Dispatcher()
+
+    def isAuth(self):
+        print("user is authenticated successfully")
+        return True
+
+    def track(self, request):
+        print("request {} recorded".format(request))
+
+    def dispatchRequest(self, request):
+        self.track(request)
+        if self.isAuth():
+            self.dispatcher.dispatch(request)
+
+front_controller = FrontController()
+front_controller.dispatchRequest("HOME")
+front_controller.dispatchRequest("STUDENT")
+# 补充8, 拦截过滤器模式, 过滤器模式只是简单的过滤掉对象, 而这里的过滤一是并没有把请求过滤掉
+# 只是拦截后做下某些特殊处理, 另外, 处理完成后还要交给请求处理程序, 功能比较完备
+
 
 # 补充9, 服务定位器模式
 
