@@ -47,7 +47,7 @@
     (1) 算法设计模式
     算法分析相关的: 最好、最坏、平均、摊销(最坏情况下的平均)
     算法结构相关的: 非递归、递归
-    算法思想相关的: 暴力 减治 分治 回溯 分支限界 贪心 动态规划, 这7个算法思想一定牢牢掌握 
+    算法思想相关的: 暴力 减治 分治 回溯 分支限界 贪心 动态规划, 后6个算法思想一定牢牢掌握 
     
     (2) 软件工程设计模式
     创建型模式: 工厂, 抽象工厂, 单例, 建造者, 原型
@@ -1771,8 +1771,183 @@ front_controller.dispatchRequest("HOME")
 front_controller.dispatchRequest("STUDENT")
 # 补充8, 拦截过滤器模式, 过滤器模式只是简单的过滤掉对象, 而这里的过滤一是并没有把请求过滤掉
 # 只是拦截后做下某些特殊处理, 另外, 处理完成后还要交给请求处理程序, 功能比较完备
+# 好像多了个Filter Manager
+class Target:
+    def execute(self, request):
+        print("拦截器处理完, 然后Executing request: " + request)
 
+class Filter(metaclass=ABCMeta):
+    def execute(self, request):
+        pass
 
-# 补充9, 服务定位器模式
+class Filter1(Filter):
+    def execute(self, request):
+        print("经过第一个拦截器")
 
-# 补充10, 传输对象模式
+class Filter2(Filter):
+    def execute(self, request):
+        print("经过第二个拦截器")
+
+class FilterChain:
+    def __init__(self, target):
+        self.filters = []
+        self.target = target
+
+    def setTarget(self, target):
+        self.target = target
+
+    def addFilter(self, filter: Filter):
+        self.filters.append(filter)
+
+    def execute(self, request):
+        for each in self.filters:
+            each.execute(request)
+        self.target.execute(request)
+
+# 多加这一层封装的意义何在
+class FilterManager:
+    def __init__(self, target):
+        self.filter_chain = FilterChain(target)
+
+    def addFilter(self, filter):
+        self.filter_chain.addFilter(filter)
+
+    def filterRequest(self, request):
+        self.filter_chain.execute(request)
+
+t = Target()
+fm = FilterManager(t)
+f1 = Filter1()
+f2 = Filter2()
+fm.addFilter(f1)
+fm.addFilter(f2)
+fm.filterRequest("HTTP REQUEST")
+
+# 补充9, 服务定位器模式Service Locator Pattern
+# 用在想利用JNDI(Java Naming and Directory Interface)定位各种服务的时候, 在首次请求时
+# 服务定位器在JNDI中查找, 并缓存该服务对象, 再次请求相同的服务时, 服务定位器会在它的缓存中查找
+# Service, 实际请求的服务
+# Context, 带有对要查找的服务的引用
+# Service Locator, 通过JNDI查找和缓存服务来获取服务的单点接触
+# Cache, 缓存
+# Client
+class Service(metaclass=ABCMeta):
+    def getName(self):
+        pass
+    def execute(self):
+        pass
+
+class Service1(Service):
+    def getName(self):
+        return "SERVICE1"
+    def execute(self):
+        print("executing service 1")
+
+class Service2(Service):
+    def getName(self):
+        return "SERVICE2"
+    def execute(self):
+        print("executing service 2")
+
+class Context:
+    def lookup(self, name:str):
+        if name == "SERVICE1":
+            print("jndi creating a new service 1")
+            return Service1()
+        else:
+            print("jndi creating a new service 2")
+            return Service2()
+
+class Cache:
+    def __init__(self):
+        self.services = {}
+
+    def getService(self, name: str):
+        if name in self.services:
+            print("cache returing service {}".format(name))
+            return self.services.get(name)
+        else: return None
+
+    def addService(self, service):
+        self.services[service.getName()] = service
+
+class ServiceLocator:
+
+    # python里没有静态变量, 只有类变量
+    cache = Cache()
+    context = Context()
+
+    @staticmethod
+    def getService(name: str):
+        name = name.upper()
+
+        service = ServiceLocator.cache.getService(name)
+        if service: return service
+
+        service = ServiceLocator.context.lookup(name)
+        ServiceLocator.cache.addService(service)
+        return service
+
+service = ServiceLocator.getService("Service1")
+service.execute()
+service = ServiceLocator.getService("Service2")
+service.execute()
+service = ServiceLocator.getService("Service1")
+service.execute()
+service = ServiceLocator.getService("Service2")
+service.execute()
+
+# 补充10, 传输对象模式, Transfer Object Pattern
+# 用于从客户端向服务器一次性传递带有多个属性的数据
+# 传输对象是一个具有getter, setter方法的简单POJO类, 可序列化
+# 包括Business Object, 为传输对象填充数据
+# Transfer Object, 简单的POJO, 只有设置/获取属性的方法
+class StudentVO:
+    def __init__(self, name, id):
+        self.name = name
+        self.id = id
+
+    def setName(self, name):
+        self.name = name
+
+    def getName(self):
+        return self.name
+
+    def setID(self, id):
+        self.id = id
+
+    def getID(self):
+        return self.id
+
+class StudentBO:
+    def __init__(self):
+        self.students = {}
+        self.students[0] = StudentVO("jim", 0)
+        self.students[1] = StudentVO("Lucy", 1)
+
+    def deleteStudent(self, student):
+        self.students.pop(student.getID())
+        print("student {} removed".format(student.getID()))
+
+    def getAllStudents(self):
+        return self.students.values()
+
+    def getStudent(self, id):
+        return self.students[id]
+
+    def updateStudent(self, student):
+        # 更新数据库
+        self.students[student.getID()].setName(student.getName())
+        print("student {} updated".format(student.getID()))
+
+sbo = StudentBO()
+for each in sbo.getAllStudents():
+    print(each.getID(), each.getName())
+
+# 这个例子里是同一个对象, 而实际场景中不是一个, 用copy模拟不是同一个
+s = copy.copy(sbo.getStudent(0))
+s.setName("CCC")
+sbo.updateStudent(s)
+
+s = sbo.getStudent(0)
+print(s.getID(), s.getName())
