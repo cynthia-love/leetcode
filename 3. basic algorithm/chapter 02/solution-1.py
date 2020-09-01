@@ -16,9 +16,9 @@
     2. 类定义了对象的实例变量instance variable, 又称数据成员data member
        还定义了对象的可执行方法methods, 又称成员函数member function
     3. 面向对象的设计目标
-       健壮性robustness, 不光可以处理正确输入, 还可以处理各种异常情况(同一环境统一应用下)
        适应性adaptability, 可以适应各种外部环境的变化, 比如硬件, 平台, 时间发展(跨环境)
        重用性reusability, 同样的代码可以用在不用的应用中(同一环境下跨应用)
+       健壮性robustness, 不光可以处理正确输入, 还可以处理各种异常情况(同一环境统一应用下)
     4. 面向对象的设计原则(模块化-健壮性, 重用性; 抽象化; 封装-健壮性, 适应性)
        模块化: 比如一所房子的电力系统, 热力系统, 水力系统等不同的功能单元, 比如python中的模块, 就是
               一个关系比较密切的函数和类的集合, 比如math, os. 模块化可以提升健壮性, 因为不同的组件易于
@@ -121,7 +121,7 @@ def f2(l, target):
 # 分治将问题分解成子问题, 得到子问题的解之后还需要合并才能得到最终的解, 所有叶节点都要到达, 然后合并出根节点的解
 # 一般情况下不特别区分减治, 而是将其划归到广义的分治中去
 """用状态空间树的思维去理解, 从根节点出发, 减治法能直接判断出下一步该走哪个子节点, 然后该子节点成为当前节点继续此过程"""
-"""直到到达某个叶节点, 并可由该叶节点或(注意这里的或)路径上已经过的所有节点得出最终的解"""
+"""直到到达某个叶节点, 并可由该叶节点或(注意这里的或)路径上已经过的所有节点直接得出最终的解"""
 def f3(l, target):
     # l升序
     def rf(left, right):
@@ -149,6 +149,7 @@ print(f3([1, 2, 3, 4], 5))
 
 def f4(l, target):
     # l什么顺序无所谓
+    # 因为l非有序, 目标值可能在左半部分, 也可能在右半部分, 所以不能直接"减"治, 得两边都处理, 分而都治
     def rf(left, right):
         if left > right:
             return False
@@ -236,7 +237,7 @@ f5()
 # 回溯法, 如果当前扩展节点不能够再往深度移动, 则当前扩展节点成为死节点, 此时回溯至最近一个活节点
 # 处, 而分支界限法中, 每个活结点只有一次机会成为扩展节点, 活结点一旦成为扩展节点, 就一次性产生其
 # 所有子节点, 一般用队列实现广度优先搜索. 关于第一点区别, 没太明白, 感觉分支限界和回溯的唯一区别
-# 就是一个是深度一个是广度, 也都是在所有解里找最优, 而且也都存在限界函数, 还如叫深度限界, 广度限界
+# 就是一个是深度一个是广度, 也都是在所有解里找最优, 而且也都存在限界函数, 还不如叫深度限界, 广度限界
 """用状态空间树的思维去理解, 从根节点出发, 分支限界法不断地去试其所有子节点, 差不多就加到队列里去"""
 """注意, 用分支法的解也是根节点到叶节点的路径, 而不是叶节点"""
 from collections import deque
@@ -347,7 +348,7 @@ def f8():
     所以(b, c, ...)是子问题最优解
     所以该问题满足最优化原理
     3. 定义V(i, j), 表示在前i个物品挑选总重量不超过j的物品的最优值
-    寻找递推关系式, 对于第i个物品
+    寻找递推关系式(注意这里的递推关系式是条件式的, 而非简单的一种关系), 对于第i个物品
     (1) j < w(i), V(i, j) = V(i-1, j)
     (2) j > w(i), V(i, j) = max(V(i-1, j), V(i-1, j-w(i))+v(i))
     !!!动规最关键的就是想出来这么个表格, 可以是一维, 也可以是二维的!!!
@@ -583,6 +584,7 @@ class Single:
     def __new__(cls, *args, **kwargs):
         if not hasattr(cls, '_instance'):
             cls._instance = super().__new__(cls)
+        # cls._instance.x = x
         return cls._instance
 
     # 这里是在init里给实例变量赋值还是在new里直接赋值
@@ -876,6 +878,7 @@ dc.draw()
 # 2.2.6 软件工程设计模式-结构型模式-组合, Composite
 # 区别于fishc里提到的类的组合, 那个仅仅只是一个类里的变量类型是自定义类类型
 # 而这里的组合要求更高, 一个类兼具部分整体的特性,依据树形结构来组合对象
+# 后面树和图中应该会遇到这种模式
 class Employee:
     def __init__(self, name, pos):
         self.name = name
@@ -1021,8 +1024,8 @@ s.execute()
 # 即比普通的抽象类多定义了点东西, 制定了一个算法的框架, 子类可以可以重写该算法的各个部分
 # 利用抽象类特性, 制定顶层逻辑框架, 将逻辑的细节以抽象方法的形式强制子类去实现
 class SortTemplate(metaclass=ABCMeta):
-    def __init__(self):
-        self.l = [4, 3, 2, 1]
+    def __init__(self, l):
+        self.l = l
 
     @abstractmethod
     def sort(self):
@@ -1037,12 +1040,15 @@ class SortTemplate(metaclass=ABCMeta):
         self.fout()
 
 class MySort(SortTemplate):
+    # 子类里不提供init函数, 则会自动调用父类的
+    # 提供了, 需要显式用super()去调父类的
+    # 这里的逻辑在于子类父类共享一个实例self
     def sort(self):
         print("开始排序")
     def fout(self):
         print(self.l)
 
-ms = MySort()
+ms = MySort([1, 2, 8, 10])
 ms.play()
 # 2.3.3 软件工程设计模式-行为型模式-观察者, Observer
 # 当一个对象被修改时, 自动通知依赖它的对象, 而并不知道有多少依赖它, 有点像react里的state
@@ -1532,6 +1538,7 @@ class BookFactory:
             return NormalBook(1, "图书1")
         if id == 2:
             return NormalBook(2, "图书2")
+        # 和工厂模式配合, 无法识别参数时返回自定义的空对象而非None
         return NoneBook()
 bf = BookFactory()
 bf.createBook(1).show()
@@ -1681,7 +1688,7 @@ c.printData()
 # 补充6, 数据访问对象模式DAO, Data Access Object Pattern
 # 用于把低级的数据访问API从高级的业务服务中分离出来, 包括
 # 数据访问对象抽象类, Data Access Object ABC
-# 数据访问对象是体力, Data Access Object concrete class, 负责从数据源获取数据
+# 数据访问对象实体类, Data Access Object concrete class, 负责从数据源获取数据
 # 模型对象, Model Object / Value Object, 包含get/set方法来存储通过DAO类检索到的数据
 class StudentModel:
     def __init__(self, no, name):

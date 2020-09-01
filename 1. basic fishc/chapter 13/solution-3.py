@@ -29,7 +29,7 @@ from datetime import date
     10. Python/C API
     10相当于9相当于3对于2
     11. FAQs, 常见问题解答
-    12. 去文档里搜一个timeit模块, 学会
+    12. 去文档里搜一个timeit模块, 学会性能分析(时间复杂度)
 
 """
 import sys

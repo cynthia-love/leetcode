@@ -1,13 +1,19 @@
 
 
-def f():
-    yield 1
-    yield 2
+class A:
+    def __init__(self, x):
+        self.x = x
 
-x = f()
-y = iter(x)
+class B(A):
+    def fout(self):
+        print(self.x)
 
-print("aaaa".find("b"))
-print("" in "aaa")
-if "":
-    print("haha")
+
+b = B(100)
+b.fout()
+
+import pandas
+import numpy
+
+def get_x():
+    pass
