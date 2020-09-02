@@ -5,7 +5,7 @@
     学习unittest模块, 单元测试(不要再pycharm里直接运行, 右键open in terminal后命令行执行)
     TestCase, 测试用例
     TestSuite, 测试集合
-    TestLoader, 加载测试用例
+    TestLoader, 加载测试用例(一般用不到)
     TextTestRunner, HTMLTestRunner(要单独下, html-testRunner)等, 执行用例
 
     HTMLTestRunner需要单独安装, 且由于其配置文件里的jquery路径有问题(谷歌的访问不了)会导致
@@ -29,6 +29,7 @@ import unittest
 class TestCase(unittest.TestCase):
     """test case"""
     # 更准确地说, 这里不是一个测试用例, 而是一堆, 每有一个test_xxx方法就代表一个测试用例
+    # 父类里构造函数需要传入方法名, TestCase("test_minus"), 即每个方法创建一个实例
 
     @classmethod
     def setUpClass(cls) -> None:
@@ -55,7 +56,7 @@ if __name__ == '__main__':
     suite = unittest.TestSuite()
     test1 = TestCase("test_add")
     test2 = TestCase("test_minus")
-    test3 = TestCase("test_add")
+    test3 = TestCase("test_add")  # 实际运用时, 会外传参数, 不会有重复用例
 
     suite.addTest(test1)
     suite.addTest(test2)
