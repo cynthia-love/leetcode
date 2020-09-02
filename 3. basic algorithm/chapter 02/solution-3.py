@@ -2,7 +2,7 @@
 # Author: Cynthia
 
 """
-    类定义
+    一个简单的类定义
 """
 
 class CreditCard:

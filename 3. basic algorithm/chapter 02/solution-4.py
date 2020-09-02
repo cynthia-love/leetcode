@@ -2,6 +2,9 @@
 # Author: Cynthia
 
 """
+    单元测试模块unittest
+"""
+"""
     学习unittest模块, 单元测试(不要再pycharm里直接运行, 右键open in terminal后命令行执行)
     TestCase, 测试用例
     TestSuite, 测试集合
