@@ -149,4 +149,75 @@ class PredatoryCreditCard(CreditCard):
 
 # 再演示一个例子, 数列, 数字的序列, 每个数字都依赖于一个或更多前面的数字
 # 抽象等差数列, 等比数列, 斐波那契额数列得到数列基类
+class Progression:
+    """Iterator producing a generic progression
+    Default iterator produces the whole number 1, 2, 3
+    """
+
+    def __init__(self, start=0):
+
+        """Initialize current to the first value of the progression"""
+        self._current = start
+
+    def _advance(self):
+        """
+        Update self._current to a new value
+        This should be overridden by a subclass to customize progression
+        By convention, if current is set to None, this designates the end of a finite progression
+        :return:
+        """
+        self._current += 1
+
+    def __iter__(self):
+        while self._current is not None:
+            yield self._current
+            self._advance()
+
+        raise StopIteration
+    # 注意, 如果直接在__iter__里用yield返回值, 而不写__next__函数
+    # 那么其instance就不能直接用next()函数, 得写一步it = iter(p)之后才能调用next
+p = iter(Progression(0))
+print([next(p) for _ in range(5)])
+
+class ArithmeticProgression(Progression):
+    def __init__(self, start=0, increment=1):
+        super().__init__(start)
+        self._increment = increment
+
+    def _advance(self):
+        self._current += self._increment
+
+p = iter(ArithmeticProgression(1, 3))
+print([next(p) for _ in range(5)])
+
+class GeometricProgression(Progression):
+    def __init__(self, start=1, base=2):
+        super().__init__(start)
+        self._base = base
+
+    def _advance(self):
+        self._current *= self._base
+
+p = iter(GeometricProgression(2, 4))
+print([next(p) for _ in range(5)])
+
+# 斐波那契
+class FibonacciProgression(Progression):
+    def __init__(self, start1, start2):
+        super().__init__(start1)
+        self._next = start2
+
+    def _advance(self):
+        self._current, self._next = self._next, self._current+self._next
+
+    def show(self, n):
+        it = iter(self)
+        for _ in range(n):
+            print(next(it))
+
+p = iter(FibonacciProgression(2, 4))
+print([next(p) for _ in range(5)])
+p = FibonacciProgression(2, 4)
+p.show(5)
+
 
