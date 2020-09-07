@@ -2,13 +2,19 @@
 # Author: Cynthia
 
 """
-    控制参数大小
-"""
-def make_payment(price):
-    if price < 0:
-        raise ValueError("price {} lower than zero".format(price))
-    else:
-        pass
+    控制成员函数参数类型
 
-make_payment(9)
-make_payment(-9)
+"""
+
+class CreditCard:
+    def charge(self, val):
+        if isinstance(val, (int, float)):
+            print(val)
+        else:
+            raise ValueError
+
+
+cc = CreditCard()
+cc.charge(100)
+cc.charge(1.1)
+cc.charge("hello")

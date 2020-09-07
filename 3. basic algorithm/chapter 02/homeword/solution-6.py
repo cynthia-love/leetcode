@@ -2,20 +2,13 @@
 # Author: Cynthia
 
 """
-    可选参数
+    控制参数大小
 """
-
-def f(a, b, c, d=0):
-    print(a, b, c, d)
-
-# 第一种写法比第二种简洁
-def f2(a, b, c, d=None):
-    if d is None:
-        print(a, b, c, 0)
+def make_payment(price):
+    if price < 0:
+        raise ValueError("price {} lower than zero".format(price))
     else:
-        print(a, b, c, d)
+        pass
 
-f(1, 2, 3)
-f(1, 2, 3, 8)
-f2(1, 2, 3)
-f2(1, 2, 3, 8)
+make_payment(9)
+make_payment(-9)
