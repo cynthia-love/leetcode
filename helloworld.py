@@ -1,19 +1,17 @@
 
 
 class A:
-    def __init__(self, x):
-        self.x = x
+    def __init__(self):
+        pass
 
-class B(A):
-    def fout(self):
-        print(self.x)
+    def f(self):
+
+        return B()
+
+class B:
+    def __init__(self):
+        self.a = A()
 
 
-b = B(100)
-b.fout()
-
-import pandas
-import numpy
-
-def get_x():
-    pass
+a = A()
+print(a.f())
